@@ -6,6 +6,14 @@ import 'nextra-theme-docs/style.css'
 export const metadata = {
   title: 'Caro-Kann',
   description: '전역 상태 관리 라이브러리',
+  images: [
+    {
+      url: 'https://github.com/user-attachments/assets/1fa53294-205c-45a3-b6f8-b1be585ce11e',
+      width: 1200,
+      height: 630,
+      alt: 'Caro-Kann 라이브러리',
+    }
+  ],
   openGraph: {
     title: 'Caro-Kann - 전역 상태 관리 라이브러리',
     description: 'useState와 유사한 문법으로 사용할 수 있는 전역 상태 관리 도구',
