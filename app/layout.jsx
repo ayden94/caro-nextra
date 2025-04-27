@@ -17,7 +17,7 @@ export const metadata = {
         alt: 'Caro-Kann 라이브러리',
       }
     ],
-    locale: 'ko',
+    locale: 'en',
     type: 'website',
   }
 }
