@@ -2,7 +2,6 @@ import { Layout, Navbar } from 'nextra-theme-docs'
 import { Head, Search } from 'nextra/components'
 import 'nextra-theme-docs/style.css'
 
-
 // 메타데이터 추가
 export const metadata = {
   title: 'Caro-Kann',
@@ -31,7 +30,7 @@ export default async function RootLayout({ children, params }) {
       logo={
           <span style={{fontSize: "1.6rem"}}><b>Caro-Kann</b></span>
       }
-      logoLink={`/${lang}`}
+      logoLink="/"
       projectLink="https://github.com/ayden94/caro-kann"
     />
   )
@@ -40,15 +39,12 @@ export default async function RootLayout({ children, params }) {
     <html
     lang={lang}
     dir="ltr"
-    // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
     suppressHydrationWarning
   >
     <Head></Head>
     <body>
     <Layout
           navbar={navbar}
-          // pageMap={await getPageMap(lang)}
-
           pageMap={
             [
               { "data": {} },
