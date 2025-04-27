@@ -11,7 +11,7 @@ export const metadata = {
     description: 'useState와 유사한 문법으로 사용할 수 있는 전역 상태 관리 도구',
     images: [
       {
-        url: 'https://img1.daumcdn.net/thumb/R960x0/?scode=mtistory2&fname=https://img1.daumcdn.net/thumb/R750x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FGxXMj%2FbtsLHOrJhvB%2FT2cgkdLkccDgKgliVqY7L0%2Fimg.webp', // 실제 이미지 URL로 변경하세요
+        url: '/caro.webp', // 실제 이미지 URL로 변경하세요
         width: 1200,
         height: 630,
         alt: 'Caro-Kann 라이브러리',
