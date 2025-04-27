@@ -1,0 +1,23 @@
+# 파생 상태
+
+자바스크립트의 함수는 1급 객체로써 프로퍼티와 메서드를 가질 수 있습니다. useStore은 튜플을 리턴하는 함수인 동시에 derived라는 메서드를 가진 객체이기도 합니다. 위에서 살펴본 선택자 함수와 유사하게 derived 메서드는 파생 함수를 인자로 받습니다.
+
+이 메서드를 통해 기존의 상태를 기반으로 파생 상태(derived state)를 만들어낼 수 있습니다. 이는 상태의 재사용성과 조합성을 높이는 데 유용하며, 복잡한 상태 관리 로직을 단순화하는 데 도움을 줍니다. 파생 상태는 참조하는 상태가 변경될 때마다 새로 계산됩니다.
+
+```tsx
+function Comp() {
+  const [value, setValue] = useStore();
+  const isMarriedText = useStore.derived(
+    store => store.isMarried
+      ? `and { store.name } is married.`
+      : `and { store.name } is not married.`
+  )
+  
+  return (
+    <>
+      <div>{ value.name } is { value.age } years old.</div>
+      <div>{ isMarriedText }</div>
+    </>
+  )
+}
+```

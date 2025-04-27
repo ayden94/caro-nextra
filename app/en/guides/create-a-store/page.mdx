@@ -1,0 +1,26 @@
+# Create a store
+
+In Caro-Kann, a **store** is defined as an external space where the global state is stored. To create such a store, Caro-Kann uses the `create` function. This function takes an initial value, stores it in the internal store, and returns `useStore`. It is important to remember that the evaluation of the create function must occur outside of the component. Otherwise, the store may be lost depending on the component's lifecycle.
+
+```ts
+const useStore = create({
+  name: "Ayden Blair",
+  age: 30,
+  isMarried: false,
+});
+```
+
+useStore is a custom hook that return `[value, setValue]` tuple just like useState in React.js.
+
+```tsx
+function Comp() {
+  const [value, setValue] = useStore();
+  
+  return (
+    <>
+      <div>{ value.name } is { value.age } years old.</div>
+      <div>and { value.name } is { value && "not " }married.</div>
+    </>
+  )
+}
+```

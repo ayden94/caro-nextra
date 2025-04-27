@@ -1,0 +1,92 @@
+# persist
+
+Caro-Kann allows global state to be stored in local storage, session storage, and cookies. This feature is especially important for improving user experience and is suitable for values that need to persist even after a page refresh or session termination, such as the theme settings of a webpage.
+
+```tsx
+const useStore = create(
+  persist(initialState, persistOptions)
+)
+```
+
+When storing global state in Caro-Kann, the state is stored alongside a version. This allows the application to easily transform or disregard data from previous versions if the state structure changes. For example, if the theme needs to include font size in addition to background color, Caro-Kann handles this using the migrate object.
+
+```tsx
+type Theme = "light" | "dark";
+ 
+const useStore = create<Theme>(
+  persist(
+    "light",
+    {
+      local: "theme",
+   // session: "theme",
+   // cookie: "theme",
+    }
+  )
+);
+```
+
+| Key   | Value                          |
+|-------|--------------------------------|
+| theme | `{"state":"light","version":0}`  |
+
+If the migrate object exists, Caro-Kann automatically checks for version differences when the client connects to the service. If the client’s state is not the latest version, it calls the migrate.strategy function to update the state to the latest version. The strategy method takes the existing state and version from the client as arguments and returns the updated state based on them.
+
+```tsx
+type Theme = { color: "light" | "dark", fontSize: number };
+ 
+const useStore = create<Theme>(
+  persist(
+    { color: "light", fontSize: 16 },
+    {
+      local: "theme",
+      migrate: {
+        version: 1,
+        strategy: (prevState, prevVersion) => {
+          return { color: prevState, fontSize: 16 };
+        },
+      },
+    }
+  )
+);
+```
+| Key   | Value                                                |
+|-------|------------------------------------------------------|
+| theme | `{"state":{"color":"dark","fontSize":16},"version":1}` |
+
+You successfully updated version 0 to version 1 using migrate. However, a few weeks later, a senior developer comes and asks to change the font state name to font-size. Since migrate only operates when the client connects to the service, clients who haven’t yet connected will still be on version 0. Therefore, you need to handle both version 0 and version 1.
+
+But don't worry! By using a switch statement, you can effectively handle both versions.
+
+```tsx
+type Theme = { color: "light" | "dark", ["font-size"]: number };
+ 
+const strategy = (prevState: any, prevVersion: number) => {
+  switch (prevVersion) {
+    case 0:
+      return { color: prevState, ["font-size"]: 16 };
+    case 1:
+      return { color: prevState.color, ["font-size"]: prevState.fontSize };
+    default:
+      return prevState;
+  }
+}
+
+const useStore = create<Theme>(
+  persist(
+    { color: "light", ["font-size"]: 16 },
+    {
+      local: "theme",
+      migrate: {
+        version: 2,
+        strategy,
+      },
+    }
+  )
+);
+```
+| Key   | Value                                                 |
+|-------|-------------------------------------------------------|
+| theme | `{"state":{"color":"dark","font-size":16},"version":2}` |
+
+
+If there are multiple previous versions, it becomes practically impossible to specify the type of prevState. This leads to the use of any, which prevents Caro-Kann from correctly inferring the state. Therefore, if you are using migrate for version management, you must provide a generic type to playTartakower to ensure that Caro-Kann can correctly infer the state type.

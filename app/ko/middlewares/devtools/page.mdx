@@ -1,0 +1,33 @@
+# devtools
+
+
+The devtools middleware in Caro-Kann makes state management more intuitive and efficient. This middleware enables real-time tracking of state changes through the Redux DevTools extension. Developers gain clear visibility into how the state evolves, making debugging and optimization easier.
+
+```tsx
+const useStore = create(
+  devtools(initialState, storeName)
+)
+
+```
+For example, managing a count state with the devtools middleware allows real-time observation of state changes. Each button click, whether incrementing or decrementing the state, is recorded in Redux DevTools. This simplifies complex state management and debugging, significantly enhancing developer productivity.
+
+```tsx
+const useStore = create(
+  devtools({ count: 0 }, "devtoolsTestStore")
+);
+ 
+export default function Page() {
+  const [count, setCount] = useStore(store => store.count)
+ 
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <button onClick={() => setCount(count - 1)}>Decrement</button>
+    </div>
+  )
+}
+```
+
+
+![Alt text](https://img1.daumcdn.net/thumb/R1600x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FW1Bg0%2FbtsLFcnV3hh%2FVsMA9H4B98lPMIWmt4Mqr0%2Fimg.png)
