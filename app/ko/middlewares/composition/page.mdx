@@ -1,5 +1,4 @@
-# Middleware Composition
-
+# 미들웨어 합성
 
 Caro-Kann의 여러 미들웨어는 특정 조건에 따라 결합하여 사용할 수 있습니다. 만약 미들웨어가 useStore가 반환하는 튜플 중 setValue의 동작을 변경한다면, 다른 미들웨어 내부에서 사용할 수 없습니다. 또한, 결합할 미들웨어는 initialState 위치에서 호출해야 합니다. 따라서 튜플을 반환하지 않고 initialState 대신 initialFn을 받는 zustand 미들웨어는 다른 미들웨어와 결합하여 사용할 수 없습니다.
 
