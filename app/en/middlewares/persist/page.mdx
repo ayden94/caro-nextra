@@ -89,4 +89,4 @@ const useStore = create<Theme>(
 | theme | `{"state":{"color":"dark","font-size":16},"version":2}` |
 
 
-If there are multiple previous versions, it becomes practically impossible to specify the type of prevState. This leads to the use of any, which prevents Caro-Kann from correctly inferring the state. Therefore, if you are using migrate for version management, you must provide a generic type to playTartakower to ensure that Caro-Kann can correctly infer the state type.
+If there are multiple previous versions, it becomes practically impossible to specify the type of prevState. This leads to the use of any, which prevents Caro-Kann from correctly inferring the state. Therefore, if you are using migrate for version management, you must provide a generic type to create function to ensure that Caro-Kann can correctly infer the state type.

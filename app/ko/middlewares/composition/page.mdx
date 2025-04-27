@@ -1,11 +1,9 @@
 # Middleware Composition
 
 
-The various middleware in Caro-Kann can be combined and used based on specific conditions. If a middleware alters the behavior of setValue from the tuple returned by useStore, it cannot be used inside other middleware. Additionally, the middleware to be combined must be called at the initialState position. Therefore, Zustand middleware that does not return a tuple and instead takes initialFn instead of initialState cannot be combined with other middleware.
+Caro-Kann의 여러 미들웨어는 특정 조건에 따라 결합하여 사용할 수 있습니다. 만약 미들웨어가 useStore가 반환하는 튜플 중 setValue의 동작을 변경한다면, 다른 미들웨어 내부에서 사용할 수 없습니다. 또한, 결합할 미들웨어는 initialState 위치에서 호출해야 합니다. 따라서 튜플을 반환하지 않고 initialState 대신 initialFn을 받는 zustand 미들웨어는 다른 미들웨어와 결합하여 사용할 수 없습니다.
 
-The reducer middleware takes initialState, but returns a dispatcher instead of setValue. As a result, it cannot be called at the initialState position of other middleware, but it can be combined by calling other middleware at the reducer's initialState position. On the other hand, the persist and devtools middleware have no such restrictions and can be freely combined with other middleware.
-
-
+reducer 미들웨어는 initialState를 받지만, setValue 대신 dispatcher를 반환합니다. 이로 인해 다른 미들웨어의 initialState 위치에서 호출할 수 없지만, 다른 미들웨어들을 reducer의 initialState 위치에서 호출하여 결합할 수 있습니다. 반면, persist와 devtools 미들웨어는 결합에 제한이 없어 자유롭게 다른 미들웨어와 함께 사용할 수 있습니다.
 
 ```tsx
 const useStore = create(

@@ -40,7 +40,7 @@ export default async function RootLayout({ children, params }) {
               {
                 // content/index.mdx
                 "name": "intro",
-                "route": "/intro",
+                "route": "/",
                 "title": "Introduce the caro-kann",
                 "frontMatter": {}
               },
@@ -78,7 +78,7 @@ export default async function RootLayout({ children, params }) {
               {
                 "name": "middlewares",
                 "title": "Middlewares",
-                "route": "/middlewares/persist",
+                "route": "/middlewares",
                 "frontMatter": {},
                 "children": [
                   {
@@ -94,17 +94,22 @@ export default async function RootLayout({ children, params }) {
                     "frontMatter": {}
                   },
                   {
+                    "name": 'zustand',
+                    "route": "/middlewares/zustand",
+                    "title": "zustand",
+                    "frontMatter": {}
+                  },
+                  {
                     "name": "devtools",
                     "route": "/middlewares/devtools",
                     "title": "devtools",
                     "frontMatter": {}
                   },
                   {
-                    "name": 'zustand',
-                    "route": "/middlewares/zustand",
-                    "title": "zustand",
+                    "name": "composition",
+                    "route": "/middlewares/composition",
+                    "title": "Middleware Composition",
                     "frontMatter": {}
-                    
                   }
                 ]
               }
