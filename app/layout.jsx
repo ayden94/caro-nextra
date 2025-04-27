@@ -2,12 +2,27 @@ import { Layout, Navbar } from 'nextra-theme-docs'
 import { Head, Search } from 'nextra/components'
 import 'nextra-theme-docs/style.css'
 
+
+// 메타데이터 추가
 export const metadata = {
-  // Define your metadata here
-  // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
+  title: 'Caro-Kann',
+  description: '전역 상태 관리 라이브러리',
+  openGraph: {
+    title: 'Caro-Kann - 전역 상태 관리 라이브러리',
+    description: 'useState와 유사한 문법으로 사용할 수 있는 전역 상태 관리 도구',
+    images: [
+      {
+        url: 'https://img1.daumcdn.net/thumb/R960x0/?scode=mtistory2&fname=https://img1.daumcdn.net/thumb/R750x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FGxXMj%2FbtsLHOrJhvB%2FT2cgkdLkccDgKgliVqY7L0%2Fimg.webp', // 실제 이미지 URL로 변경하세요
+        width: 1200,
+        height: 630,
+        alt: 'Caro-Kann 라이브러리',
+      }
+    ],
+    locale: 'ko',
+    type: 'website',
+  }
 }
 
-// const banner = <Banner storageKey="some-key">Nextra 4.0 is released 🎉</Banner>
 export default async function RootLayout({ children, params }) {
   const { lang } = await params
 
@@ -16,21 +31,21 @@ export default async function RootLayout({ children, params }) {
       logo={
           <span style={{fontSize: "1.6rem"}}><b>Caro-Kann</b></span>
       }
-      logoLink={`/${lang}/intro`}
+      logoLink={`/${lang}`}
       projectLink="https://github.com/ayden94/caro-kann"
     />
   )
 
   return (
     <html
-      lang={lang}
-      dir="ltr"
-      // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
-      suppressHydrationWarning
-    >
-      <Head></Head>
-      <body>
-        <Layout
+    lang={lang}
+    dir="ltr"
+    // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
+    suppressHydrationWarning
+  >
+    <Head></Head>
+    <body>
+    <Layout
           navbar={navbar}
           // pageMap={await getPageMap(lang)}
 
@@ -128,7 +143,7 @@ export default async function RootLayout({ children, params }) {
         >
           {children}
         </Layout>
-      </body>
+    </body>
     </html>
   )
 }
