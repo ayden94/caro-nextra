@@ -1,7 +1,7 @@
 import metadata from "../../metadata";
 
 export async function generateMetadata({ params }) {
-  return {...metadata(await params.lang)}
+  return {...metadata("ko")}
 }
 
 export default function Layout({ children }) {

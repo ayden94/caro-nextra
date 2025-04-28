@@ -38,7 +38,7 @@ export default async function RootLayout({ children, params }) {
               {
                 "name": "guides",
                 "title": "Guides",
-                "route": "/guides/create-a-store",
+                "route": null,
                 "children": [
                   {
                     "name": "create-a-store",
