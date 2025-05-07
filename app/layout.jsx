@@ -29,12 +29,16 @@ export default async function RootLayout({ children, params }) {
             [
               { "data": {} },
               {
-                // content/index.mdx
                 "name": "intro",
                 "route": "/",
                 "title": "Introduce the caro-kann",
                 "frontMatter": {}
               },
+              // {
+              //   "name": "tutorials",
+              //   "title": "Tutorials",
+              //   "route": "/tutorial",
+              // },
               {
                 "name": "guides",
                 "title": "Guides",
@@ -69,38 +73,47 @@ export default async function RootLayout({ children, params }) {
               {
                 "name": "middlewares",
                 "title": "Middlewares",
-                "route": "/middlewares",
-                "frontMatter": {},
+                "route": null,
                 "children": [
                   {
-                    "name": "persist",
-                    "route": "/middlewares/persist",
-                    "title": "persist",
-                    "frontMatter": {}
-                  },
-                  {
-                    "name":"reducer",
-                    "route": "/middlewares/reducer",
-                    "title": "reducer",
-                    "frontMatter": {}
-                  },
-                  {
-                    "name": 'zustand',
-                    "route": "/middlewares/zustand",
-                    "title": "zustand",
-                    "frontMatter": {}
+                    "name": "logger",
+                    "route": "/middlewares/logger",
+                    "title": "logger",
                   },
                   {
                     "name": "devtools",
                     "route": "/middlewares/devtools",
                     "title": "devtools",
-                    "frontMatter": {}
+                  },
+                  {
+                    "name": "debounce",
+                    "route": "/middlewares/debounce",
+                    "title": "debounce",
+                  },
+                  {
+                    "name": "persist",
+                    "route": "/middlewares/persist",
+                    "title": "persist",
+                  },
+                  {
+                    "name": "validate",
+                    "route": "/middlewares/validate",
+                    "title": "validate",
+                  },
+                  {
+                    "name":"reducer",
+                    "route": "/middlewares/reducer",
+                    "title": "reducer",
+                  },
+                  {
+                    "name": 'zustand',
+                    "route": "/middlewares/zustand",
+                    "title": "zustand",
                   },
                   {
                     "name": "composition",
                     "route": "/middlewares/composition",
                     "title": "Middleware Composition",
-                    "frontMatter": {}
                   }
                 ]
               }

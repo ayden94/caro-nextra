@@ -9,7 +9,7 @@ const useStore = create(
 )
 ```
 
-전역 상태를 저장소에 보관할 때, Caro-Kann은 state와 함께 version을 명시합니다. 이를 사용하면 애플리케이션의 상태 구조가 변경되었을 때도 이전 버전의 데이터를 손쉽게 변환하거나 무시할 수 있습니다. 가령 theme에 배경색 말고도 글꼴 크기에 대한 요구가 추가되어야 한다고 생각해봅시다. Caro-Kann은 이를 처리하기 위해 migrate 객체를 사용합니다.
+전역 상태를 저장소에 보관할 때, Caro-Kann은 state와 함께 version을 명시합니다. 이를 사용하면 애플리케이션의 상태 구조가 변경되었을 때도 이전 버전의 데이터를 손쉽게 변환하거나 무시할 수 있습니다.
 
 ```tsx
 type Theme = "light" | "dark";
@@ -30,7 +30,8 @@ const useStore = create<Theme>(
 |-------|--------------------------------|
 | theme | `{"state":"light","version":0}`  |
 
-migrate 객체가 존재하면 Caro-Kann은 클라이언트가 서비스에 접속할 때 자동으로 버전 차이를 확인합니다. 만약 클라이언트의 상태가 최신 버전이 아닐 경우에는 migrate.strategy 함수를 호출하여 상태를 최신 버전으로 업데이트 합니다. strategy 메서드는 클라이언트에 존재하는 기존 상태와 버전을 인자로 받아, 이를 기반으로 업데이트된 상태를 반환합니다.
+
+가령 theme에 배경색 말고도 글꼴 크기에 대한 요구가 추가되어야 한다고 생각해봅시다. Caro-Kann은 이를 처리하기 위해 migrate 배열을 사용합니다. migrate 객체가 존재하면 Caro-Kann은 클라이언트가 서비스에 접속할 때 자동으로 버전 차이를 확인합니다. 만약 클라이언트의 상태가 최신 버전이 아닐 경우에는 배열 내의 적절한 함수를 호출하여 업데이트된 상태를 반환합니다.
 
 ```tsx
 type Theme = { color: "light" | "dark", fontSize: number };
@@ -40,12 +41,9 @@ const useStore = create<Theme>(
     { color: "light", fontSize: 16 },
     {
       local: "theme",
-      migrate: {
-        version: 1,
-        strategy: (prevState, prevVersion) => {
-          return { color: prevState, fontSize: 16 };
-        },
-      },
+      migrate: [
+        (prev: "light" | "dark") => ({ color: prev, fontSize: 16 })
+      ],
     }
   )
 );
@@ -56,32 +54,20 @@ const useStore = create<Theme>(
 
 migrate를 사용해서 0버전을 1버전으로 잘 업데이트 했습니다. 그런데 몇 주 뒤, 선임 개발자가 찾아와 글꼴 상태를 나타내는 이름을 font-size로 바꿔야 한다고 합니다. migrate는 클라이언트가 서비스에 접속할 때만 동작하므로, 아직 서비스에 접속하지 않은 유저 클라이언트는 여전히 0 버전인 상태입니다. 따라서 우리는 0버전과 1버전 모두를 해결해야 합니다.
 
-
-하지만 걱정할 필요 없습니다. switch 문을 사용하면 각각의 버전에 대해 효과적으로 대응할 수 있습니다.
+이를 위해 migrate 배열은 일종의 파이프처럼 구성됩니다.
 
 ```tsx
 type Theme = { color: "light" | "dark", ["font-size"]: number };
- 
-const strategy = (prevState: any, prevVersion: number) => {
-  switch (prevVersion) {
-    case 0:
-      return { color: prevState, ["font-size"]: 16 };
-    case 1:
-      return { color: prevState.color, ["font-size"]: prevState.fontSize };
-    default:
-      return prevState;
-  }
-}
 
 const useStore = create<Theme>(
   persist(
     { color: "light", ["font-size"]: 16 },
     {
       local: "theme",
-      migrate: {
-        version: 2,
-        strategy,
-      },
+      migrate: [
+        (prev: "light" | "dark") => ({ color: prev, fontSize: 16 }),
+        (prev: { color: "light" | "dark", fontSize: number }) => ({ color: prev.color, ["font-size"]: prev.fontSize })
+      ],
     }
   )
 );
@@ -90,5 +76,4 @@ const useStore = create<Theme>(
 |-------|-------------------------------------------------------|
 | theme | `{"state":{"color":"dark","font-size":16},"version":2}` |
 
-
-이전 버전이 여럿이라면 prevState의 타입을 지정하는 것이 사실상 불가능합니다. 때문에 any를 사용하게 되는데, 이로 인해 Caro-Kann은 제대로 상태를 추론하지 못하게 됩니다. 그러니 migrate를 사용해 버전 관리를 하고 있다면 create에 제네릭 타입을 제공하여 Caro-Kann이 제대로 상태의 타입을 추론할 수 있도록 해주어야 합니다.
+타입스크립트의 도움으로 migrate 파이프는 두 가지 조건을 확인합니다. 우선, 이전 인덱스의 함수가 리턴하는 타입이 그 다음 인덱스에 위치한 함수의 파라미터 타입이 되어야 합니다. 이를 통해 마이그레이션 과정에서 각 단계가 타입적으로 올바르게 연결되어 있는지를 컴파일 타임에 검증할 수 있으며, 타입 불일치로 인한 런타임 오류를 예방할 수 있습니다. 또한, 파이프의 마지막 함수가 반환하는 값의 타입은 현재 애플리케이션이 사용하는 전역 상태 타입과 정확히 일치해야 하므로, 마이그레이션이 완료된 후의 상태가 애플리케이션 로직과 완벽히 호환되도록 보장합니다.

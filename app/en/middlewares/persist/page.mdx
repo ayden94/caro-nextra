@@ -8,7 +8,7 @@ const useStore = create(
 )
 ```
 
-When storing global state in Caro-Kann, the state is stored alongside a version. This allows the application to easily transform or disregard data from previous versions if the state structure changes. For example, if the theme needs to include font size in addition to background color, Caro-Kann handles this using the migrate object.
+When storing global state in Caro-Kann, the state is stored alongside a version. This allows the application to easily transform or disregard data from previous versions if the state structure changes.
 
 ```tsx
 type Theme = "light" | "dark";
@@ -29,7 +29,7 @@ const useStore = create<Theme>(
 |-------|--------------------------------|
 | theme | `{"state":"light","version":0}`  |
 
-If the migrate object exists, Caro-Kann automatically checks for version differences when the client connects to the service. If the client’s state is not the latest version, it calls the migrate.strategy function to update the state to the latest version. The strategy method takes the existing state and version from the client as arguments and returns the updated state based on them.
+For example, suppose the theme needs to support not only background color but also font size. Caro-Kann handles this by using the migrate array. When a migrate object is present, Caro-Kann automatically checks for version differences whenever a client connects to the service. If the client's state is not up to date, it calls the appropriate function(s) in the array to transform the old state into the updated version, ensuring the client always works with the latest schema.
 
 ```tsx
 type Theme = { color: "light" | "dark", fontSize: number };
@@ -39,12 +39,9 @@ const useStore = create<Theme>(
     { color: "light", fontSize: 16 },
     {
       local: "theme",
-      migrate: {
-        version: 1,
-        strategy: (prevState, prevVersion) => {
-          return { color: prevState, fontSize: 16 };
-        },
-      },
+      migrate: [
+        (prev: "light" | "dark") => ({ color: prev, fontSize: 16 })
+      ],
     }
   )
 );
@@ -53,33 +50,22 @@ const useStore = create<Theme>(
 |-------|------------------------------------------------------|
 | theme | `{"state":{"color":"dark","fontSize":16},"version":1}` |
 
-You successfully updated version 0 to version 1 using migrate. However, a few weeks later, a senior developer comes and asks to change the font state name to font-size. Since migrate only operates when the client connects to the service, clients who haven’t yet connected will still be on version 0. Therefore, you need to handle both version 0 and version 1.
+We successfully used migrate to update version 0 to version 1. However, a few weeks later, a senior developer comes by and requests that the font state property be renamed to font-size. Since migrate only runs when a client connects to the service, any user who hasn't connected yet still retains version 0 of the state. Therefore, we now need to handle both version 0 and version 1 during the migration process.
 
-But don't worry! By using a switch statement, you can effectively handle both versions.
+But don't worry! To address this, the migrate array is structured like a pipeline.
 
 ```tsx
 type Theme = { color: "light" | "dark", ["font-size"]: number };
- 
-const strategy = (prevState: any, prevVersion: number) => {
-  switch (prevVersion) {
-    case 0:
-      return { color: prevState, ["font-size"]: 16 };
-    case 1:
-      return { color: prevState.color, ["font-size"]: prevState.fontSize };
-    default:
-      return prevState;
-  }
-}
 
 const useStore = create<Theme>(
   persist(
     { color: "light", ["font-size"]: 16 },
     {
       local: "theme",
-      migrate: {
-        version: 2,
-        strategy,
-      },
+      migrate: [
+        (prev: "light" | "dark") => ({ color: prev, fontSize: 16 }),
+        (prev: { color: "light" | "dark", fontSize: number }) => ({ color: prev.color, ["font-size"]: prev.fontSize })
+      ],
     }
   )
 );
@@ -89,4 +75,4 @@ const useStore = create<Theme>(
 | theme | `{"state":{"color":"dark","font-size":16},"version":2}` |
 
 
-If there are multiple previous versions, it becomes practically impossible to specify the type of prevState. This leads to the use of any, which prevents Caro-Kann from correctly inferring the state. Therefore, if you are using migrate for version management, you must provide a generic type to create function to ensure that Caro-Kann can correctly infer the state type.
+With the help of TypeScript, the migrate pipe enforces two key conditions. First, the return type of a function at a given index must match the parameter type of the function at the next index. This ensures that each step in the migration process is type-safe and properly connected, allowing TypeScript to catch potential type mismatches at compile time and prevent runtime errors. Additionally, the return type of the final function in the pipe must exactly match the current global state type used by the application, ensuring that the final migrated state is fully compatible with the rest of the application logic.

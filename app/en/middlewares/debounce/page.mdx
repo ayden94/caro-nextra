@@ -1,0 +1,30 @@
+# debounce
+
+The debounce middleware is a powerful tool for efficiently managing rapid, successive state updates. It works by collecting multiple quick state changes over a short period (default: 300ms) and then applying only the final update after the specified time has passed since the last event.
+
+This approach is especially beneficial in scenarios with frequent events—such as search input, form changes, or window resizing—as it helps prevent unnecessary renders and computations, thereby significantly improving application performance.
+
+```tsx
+const useStore = create(
+  debounce(initialState, wait = 300ms)
+)
+```
+
+The real strength of the debounce middleware lies in its ability to preserve all update intents while optimizing performance—not just applying the last one blindly. This is particularly useful when users trigger multiple interactions (e.g., clicks or keystrokes) in a short span, ensuring that each action is respected in order while still avoiding redundant updates.
+```tsx
+const useStore = create(
+  debounce({ count: 0 }, 1000)
+);
+ 
+export default function Page() {
+  const [count, setCount] = useStore(store => store.count)
+ 
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={() => setCount(count => count + 1)}>Increment</button>
+      <button onClick={() => setCount(count => count - 1)}>Decrement</button>
+    </div>
+  )
+}
+```

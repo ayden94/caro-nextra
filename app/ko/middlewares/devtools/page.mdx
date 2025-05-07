@@ -23,12 +23,11 @@ export default function Page() {
   return (
     <div>
       <h1>{count}</h1>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
-      <button onClick={() => setCount(count - 1)}>Decrement</button>
+      <button onClick={() => setCount(count => count + 1)}>Increment</button>
+      <button onClick={() => setCount(count => count - 1)}>Decrement</button>
     </div>
   )
 }
 ```
 
-
-![Alt text](https://img1.daumcdn.net/thumb/R1600x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FW1Bg0%2FbtsLFcnV3hh%2FVsMA9H4B98lPMIWmt4Mqr0%2Fimg.png)
+![Alt text](/images/devtools.png)

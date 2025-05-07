@@ -1,8 +1,10 @@
 # 미들웨어 합성
 
-Caro-Kann의 여러 미들웨어는 특정 조건에 따라 결합하여 사용할 수 있습니다. 만약 미들웨어가 useStore가 반환하는 튜플 중 setValue의 동작을 변경한다면, 다른 미들웨어 내부에서 사용할 수 없습니다. 또한, 결합할 미들웨어는 initialState 위치에서 호출해야 합니다. 따라서 튜플을 반환하지 않고 initialState 대신 initialFn을 받는 zustand 미들웨어는 다른 미들웨어와 결합하여 사용할 수 없습니다.
+reducer 미들웨어를 제외한 Caro-Kann의 다른 모든 미들웨어들은 **조건 없이 자유롭게 합성(composition)** 이 가능합니다. 이는 여러 미들웨어를 중첩하여 사용할 때, 각 미들웨어가 서로 간섭하지 않고 독립적으로 동작한다는 것을 의미합니다.
 
-reducer 미들웨어는 initialState를 받지만, setValue 대신 dispatcher를 반환합니다. 이로 인해 다른 미들웨어의 initialState 위치에서 호출할 수 없지만, 다른 미들웨어들을 reducer의 initialState 위치에서 호출하여 결합할 수 있습니다. 반면, persist와 devtools 미들웨어는 결합에 제한이 없어 자유롭게 다른 미들웨어와 함께 사용할 수 있습니다.
+예를 들어, logger, validate, debounce 미들웨어를 함께 사용할 경우, 상태 변경은 먼저 validate를 통해 유효성이 검증되고, 이후 debounce로 최적화된 시점에 적용되며, 마지막으로 logger를 통해 콘솔에 로깅되는 방식으로 자연스러운 흐름이 보장됩니다. 이러한 미들웨어 합성은 개발자가 다양한 기능을 유연하게 조합하여 상태 관리의 정확성과 성능을 동시에 확보할 수 있도록 돕습니다.
+
+다른 미들웨어들과 달리, reducer 미들웨어는 오직 create 함수 바로 아래에만 위치할 수 있습니다. 이는 reducer가 setState 대신 dispatch를 반환하기 때문입니다.
 
 ```tsx
 const useStore = create(

@@ -1,0 +1,35 @@
+# logger
+
+The logger middleware allows you to track state changes in real time and debug your application more effectively. It logs the previous and next state to the console every time the state updates, helping developers easily understand the flow of state changes.
+
+```tsx
+const useStore = create(
+  logger(initialState, options: { 
+    collapsed?: boolean, 
+    diff?: boolean,
+    timestamp?: boolean
+  } = { collapsed: false, diff: false, timestamp: true })
+)
+```
+
+It supports various options such as timestamp display, state diff logging, and log group collapsing/expanding, allowing you to tailor the logging output to your needs. This is especially useful in applications with complex state management, helping identify bugs and understand state transitions more clearly.
+
+```tsx
+const useStore = create(
+  logger({ count: 0 }, { diff: true, timestamp: true })
+);
+ 
+export default function Page() {
+  const [count, setCount] = useStore(store => store.count)
+ 
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={() => setCount(count => count + 1)}>Increment</button>
+      <button onClick={() => setCount(count => count - 1)}>Decrement</button>
+    </div>
+  )
+}
+```
+
+![Alt text](/images/logger.png)

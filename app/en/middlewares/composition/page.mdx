@@ -1,11 +1,10 @@
 # Middleware Composition
 
+All of Caro-Kann's middleware, except for the reducer middleware, can be freely composed without any conditions. This means that when multiple middlewares are used together, each middleware operates independently without interfering with each other.
 
-The various middleware in Caro-Kann can be combined and used based on specific conditions. If a middleware alters the behavior of setValue from the tuple returned by useStore, it cannot be used inside other middleware. Additionally, the middleware to be combined must be called at the initialState position. Therefore, Zustand middleware that does not return a tuple and instead takes initialFn instead of initialState cannot be combined with other middleware.
+For example, when using the logger, validate, and debounce middlewares together, the state change is first validated through validate, then optimized by debounce at the appropriate time, and finally logged to the console via logger, ensuring a smooth flow. This composition of middlewares helps developers combine various functionalities flexibly, ensuring both the accuracy of state management and the performance of the application.
 
-The reducer middleware takes initialState, but returns a dispatcher instead of setValue. As a result, it cannot be called at the initialState position of other middleware, but it can be combined by calling other middleware at the reducer's initialState position. On the other hand, the persist and devtools middleware have no such restrictions and can be freely combined with other middleware.
-
-
+Unlike other middlewares, the reducer middleware must be placed immediately below the create function. This is because the reducer returns dispatch instead of setState.
 
 ```tsx
 const useStore = create(

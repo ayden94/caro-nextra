@@ -1,0 +1,43 @@
+# validate
+
+The validate middleware is a powerful tool that brings robust type safety to state management. Before any state change occurs, it performs validation based on a predefined schema, effectively preventing invalid data from being introduced into the application state.
+
+One of its key strengths is seamless integration with popular validation libraries such as Zod, Yup, and Superstruct, allowing developers to continue using familiar tools.
+
+```tsx
+const useStore = create(
+  validate(initialState, ValidateSchema)
+)
+```
+
+The true value of the validate middleware lies in its proactive approach that significantly reduces runtime errors. If an invalid state update is attempted, the middleware blocks the update and logs a detailed error message to the console, making debugging much easier.
+
+This is particularly useful when handling complex forms or storing API response data in the state. It effectively extends TypeScript’s static type checking into runtime, giving developers confidence in the integrity of their application state and allowing them to focus more on business logic.
+
+```tsx
+import { z } from "zod";
+import * as yup from "yup";
+import { object, number } from "superstruct";
+
+const zSchema = z.object({ count: z.number().min(0) });
+const ySchema = yup.object({ count: yup.number().min(0).required() });
+const sSchema = object({ count: number() });
+
+const useStore = create(
+  validate({ count: 0 }, zSchema)
+  // validate({ count: 0 }, ySchema)
+  // validate({ count: 0 }, sSchema)
+);
+ 
+export default function Page() {
+  const [count, setCount] = useStore(store => store.count)
+ 
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={() => setCount(count => count + 1)}>Increment</button>
+      <button onClick={() => setCount(count => count - 1)}>Decrement</button>
+    </div>
+  )
+}
+```
