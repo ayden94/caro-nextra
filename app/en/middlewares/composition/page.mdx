@@ -41,3 +41,33 @@ export default function Page() {
   )
 }
 ```
+
+## Understanding Middleware Composition Results
+
+Most middleware can be composed freely without any specific restrictions. Developers can arrange the middleware in any order, and in many cases, there are no special conditions to consider during the composition. However, the way and order in which middleware is composed can result in significantly different behaviors, or in some cases, no impact at all.
+
+For example, in the case below, the execution order of the persist and validate middleware does not affect the result, as both middleware do not influence each other's behavior.
+
+```tsx
+const useStore = create(
+  persist(validate({ count: 0 }, zSchema), { local: "count" })
+);
+
+const useStore = create(
+  validate(persist({ count: 0 }, { local: "count" }), zSchema)
+);
+```
+
+On the other hand, in the following example, the behavior depends on the order in which the debounce and logger middleware are composed. If logger is executed first, all state change logs will be recorded before debouncing. Conversely, if debounce is executed first, any state changes within a short time frame will be ignored, and only the final change will be logged. This shows that some middleware can influence each other's behavior, so it's important to carefully consider the meaning of the composition order when deciding on the sequence.
+
+```tsx
+const useStore = create(
+  debounce(logger({ count: 0 }, { diff: true, timestamp: true }), 3000)
+);
+
+const useStore = create(
+  logger(debounce({ count: 0 }, 3000), { diff: true, timestamp: true })
+);
+```
+
+To understand the results of middleware composition, it's essential to see how Caro-Kann applies and processes middleware. In Caro-Kann, each middleware wraps the state and is executed sequentially, so the return value of one middleware is passed as the input to the next. As middleware are composed functionally, the order in which each middleware performs actions such as validation, storage, etc., can significantly affect the final behavior. Therefore, it is advisable to thoroughly understand the purpose and interactions of the middleware before determining the appropriate composition order.

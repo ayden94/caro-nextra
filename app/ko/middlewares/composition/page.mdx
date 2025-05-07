@@ -41,3 +41,33 @@ export default function Page() {
   )
 }
 ```
+
+## 합성 결과 이해하기
+
+대부분의 미들웨어는 별다른 제약 없이 자유롭게 합성할 수 있습니다. 개발자는 원하는 순서대로 미들웨어를 구성할 수 있으며, 이 과정에서 특별한 조건을 고려하지 않아도 되는 경우가 많습니다. 그러나 미들웨어를 어떤 방식으로, 어떤 순서로 합성하느냐에 따라 실행 결과가 크게 달라질 수도 있고, 전혀 영향을 미치지 않을 수도 있습니다.
+
+예를 들어, 아래와 같은 경우에는 persist와 validate 미들웨어의 실행 순서에 관계없이 항상 동일한 결과를 보장합니다. 이는 두 미들웨어가 서로의 동작에 영향을 주지 않기 때문입니다.
+
+```tsx
+const useStore = create(
+  persist(validate({ count: 0 }, zSchema), { local: "count" })
+);
+
+const useStore = create(
+  validate(persist({ count: 0 }, { local: "count" }), zSchema)
+);
+```
+
+반면, 아래 예제에서는 debounce와 logger 미들웨어의 합성 순서에 따라 동작이 달라집니다. logger가 먼저 실행되면 디바운싱 이전의 모든 상태 변경 로그가 기록되며, 반대로 debounce가 먼저 실행되면 일정 시간 내 중복된 상태 변경은 무시되고 최종 변경만 로깅됩니다. 이처럼 일부 미들웨어는 서로의 동작 방식에 영향을 주기 때문에, 합성 순서를 결정할 때 그 의미를 충분히 고려해야 합니다.
+
+```tsx
+const useStore = create(
+  debounce(logger({ count: 0 }, { diff: true, timestamp: true }), 3000)
+);
+
+const useStore = create(
+  logger(debounce({ count: 0 }, 3000), { diff: true, timestamp: true })
+);
+```
+
+미들웨어 합성 결과를 이해하기 위해서는 실제로 Caro-Kann이 미들웨어를 어떻게 적용하고 처리하는지를 살펴보는 것이 중요합니다. Caro-Kann에서는 각 미들웨어가 상태를 감싸며 순차적으로 실행되기 때문에, 앞서 적용된 미들웨어의 반환값이 다음 미들웨어의 입력으로 전달됩니다. 이처럼 함수형 방식으로 미들웨어가 중첩되므로, 각 미들웨어가 검증, 저장 등 어떤 역할을 수행하는지와 그 순서에 따라 최종 동작이 달라질 수 있습니다. 따라서 미들웨어의 목적과 상호작용을 명확히 이해한 후에 적절한 순서를 정하는 것이 바람직합니다.
