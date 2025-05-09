@@ -34,11 +34,11 @@ export default async function RootLayout({ children, params }) {
                 "title": "Introduce the caro-kann",
                 "frontMatter": {}
               },
-              // {
-              //   "name": "tutorials",
-              //   "title": "Tutorials",
-              //   "route": "/tutorial",
-              // },
+              {
+                "name": "tutorials",
+                "title": "Tutorials",
+                "route": "/tutorial",
+              },
               {
                 "name": "guides",
                 "title": "Guides",

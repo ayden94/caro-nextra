@@ -1,1 +1,234 @@
-# Tutorial : 
+# Tutorial: Building a Shopping Cart
+
+In this tutorial, we will build a simple shopping cart feature. Throughout this process, you'll learn how to use various features of the Caro-Kann library for state management and middleware composition. This tutorial is aimed at users with a basic understanding of React and focuses on learning the overall usage of the Caro-Kann library.
+
+## Creating the Store
+
+First, we define the Product type, which includes basic product information such as id, name, and price. Additionally, imageUrl and description are set as optional fields.
+
+Then, we import the create function from caro-kann and use it to create a global state store. The useCart hook returned by this create function is used to manage the cart state. Inside components, the useCart hook allows you to access and update global state, as well as compute derived state.
+
+```tsx
+export type Product = {
+  id: string,
+  name: string,
+  price: number,
+  imageUrl?: string,
+  description?: string,
+}
+
+export const useCart = create<Array<Product>>([])
+```
+
+## Updating Global State with useCart
+
+ProductBind is a component that receives a productList and renders a ProductCard for each product. Each product is passed as a prop to the ProductCard component. The ProductCard displays individual product details including image, name, description, and price. It also features an "Add to Cart" button that adds the product to the cart.
+
+Inside ProductCard, we use the useCart hook. This hook returns a tuple just like useState, with a value and setValue. This enables us to retrieve the cart state or update it as needed.
+
+```tsx
+function ProductBind({ productList }: { productList: Array<Product> }) {
+  return (
+    <>
+      {productList.map(product => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </>
+  )
+}
+
+function ProductCard({ product }: { product: Product }) {
+  const [cart, setCart] = useCart()
+
+  return (
+    <div>
+      {product.imageUrl && <Image width={200} height={80} src={product.imageUrl} alt={product.name} />}
+      <h2>{product.name}</h2>
+      <p>{product.description}</p>
+      <p>Price: ${product.price}</p>
+      <button onClick={() => setCart(prev => [...prev, product])} disabled={cart.some(item => item.id === product.id)}>Add to Cart</button>
+    </div>
+  )
+}
+```
+
+## Managing Derived State with useCart.derived
+
+The Header component visually displays the number of products in the cart. To achieve this, we use the derived property built into the useCart hook to calculate the number of products currently in the cart.
+
+The derived property is a utility for computing values derived from the current state. Here, we use it to compute the cart array’s length. This allows us to extract only the necessary derived value without referencing the entire state, improving performance by reducing unnecessary re-renders.
+
+```tsx
+function Header() {
+  const cartLength = useCart.derived(store => store.length)
+
+  const showDialog = () => {
+    addDialog({
+      element: <Cart />,
+      position: 'center' // or 'bottom'
+    });
+  };
+
+  return (
+    <header>
+      <Menu />
+
+      <Logo />
+
+      <button onClick={showDialog}>
+        <div className="cart">
+          <Image src="/cart.svg" alt="cart" width={24} height={24} />
+          {cartLength !== 0 && <span className="cart-count">{cartLength}</span>}
+        </div>
+      </button>
+    </header>
+  )
+}
+```
+
+## Creating a Cart Modal
+
+The cart modal consists of two components: Cart and CartCard. Using the useCart hook, we retrieve the globally managed cart state and render each product on the screen. The Cart component iterates over the list of products in the cart and renders a CartCard for each one. The key is set to the product’s id to help React uniquely identify each element.
+
+```tsx
+function Cart() {
+  const [cart, setCart] = useCart();
+
+  return (
+    <>
+      {cart.map(product => (
+        <CartCard key={product.id} product={product} />
+      ))}
+      <button onClick={() => setCart([] as Array<Product>)}>Clear Cart</button>
+    </>
+  )
+}
+```
+CartCard displays product information and includes a button to remove that product from the cart. When clicked, it filters out the product from the cart array and updates the state.
+
+
+```tsx
+function CartCard({ product }: { product: Product }) {
+  const [cart, setCart] = useCart();
+
+  return (
+    <div>
+      {product.imageUrl && <Image width={200} height={80} src={product.imageUrl} alt={product.name} />}
+      <h2>{product.name}</h2>
+      <p>{product.description}</p>
+      <p>Price: ${product.price}</p>
+      <button onClick={() => setCart(prev => prev.filter(item => item.id !== product.id))}>Remove from Cart</button>
+    </div>
+  )
+}
+```
+
+## Refactoring with Reducer
+
+Previously, the useCart hook directly manipulated the array state using setCart. By introducing a reducer, we can manage state in an action-driven manner. This improves predictability and maintainability, and makes the state transition process more explicit. This approach is particularly useful when cart logic becomes complex or requires various event-based operations.
+
+```tsx
+const cartReduceFn = (
+  state: Array<Product>,
+  action:
+    | { type: "CLEAR_CART" }
+    | { type: "ADD_ITEM"; payload: Product }
+    | { type: "REMOVE_ITEM"; payload: Product }
+) => {
+  switch (action.type) {
+    case "ADD_ITEM":
+      if (state.find(item => item.id === action.payload.id)) {
+        alert("This product is already in the cart");
+        return state;
+      }
+      return [...state, action.payload];
+    case "REMOVE_ITEM":
+      if (!state.find(item => item.id === action.payload.id)) {
+        alert("This product is not in the cart");
+        return state;
+      }
+      return [...state.filter(item => item.id !== action.payload.id)]
+    case "CLEAR_CART":
+      return [];
+    default:
+      return state;
+  }
+}
+
+export const useCart = create(reducer(cartReduceFn, []))
+```
+
+Now, instead of using setCart, the useCart hook uses a dispatch function to modify the state. Each component dispatches a specific action with a clear type and payload, making the intent behind each state change explicit. This greatly enhances readability and scalability. For example, ProductCard dispatches an "ADD_ITEM" action, CartCard dispatches "REMOVE_ITEM", and Cart dispatches "CLEAR_CART".
+
+
+```tsx
+function ProductCard({ product }: { product: Product }) {
+  const [cart, dispatch] = useCart()
+
+  return (
+    <div>
+      // existing UI
+      <button onClick={() => dispatch({ type: "ADD_ITEM", payload: product })}>Add to Cart</button>
+    </div>
+  )
+}
+
+function Cart() {
+  const [cart, dispatch] = useCart();
+
+  return (
+    <>
+      // existing UI
+      <button onClick={() => dispatch({ type: "CLEAR_CART" })}>Clear Cart</button>
+    </>
+  )
+}
+
+function CartCard({ product }: { product: Product }) {
+  const [cart, dispatch] = useCart();
+
+  return (
+    <div>
+      // existing UI
+      <button onClick={() => dispatch({ type: "REMOVE_ITEM", payload: product })}>Remove from Cart</button>
+    </div>
+  )
+}
+```
+
+## Persisting Cart State with Component Composition
+
+Since cart state is reset when the page is refreshed or the browser is closed, preserving the cart improves the user experience. To achieve this, you can combine the persist middleware with the reducer middleware provided by Caro-Kann.
+
+The persist middleware automatically saves the state to a specified storage (like localStorage) whenever the state changes, and restores the state when the app initializes. With this, users can return to the site and see their cart items still intact, and developers can implement persistent state without custom storage logic.
+
+```tsx
+export const useCart = create(
+  reducer(
+    cartReduceFn,
+    persist(
+      [] as Array<Product>,
+      { local: "cart" }
+    )
+  )
+)
+```
+
+During development, if you want to verify how Caro-Kann is working, you can use the logger or devtools middleware. devtools offers features like time-travel debugging and state inspection, but if you just want a simple way to see if your cart is working correctly, logger is sufficient.
+```tsx
+export const useCart = create(
+  reducer(
+    cartReduceFn,
+    persist(
+      logger(
+        [] as Array<Product>,
+        {
+          diff: true,
+          timestamp: true
+        }
+      ),
+      { local: "cart" }
+    )
+  )
+)
+```
