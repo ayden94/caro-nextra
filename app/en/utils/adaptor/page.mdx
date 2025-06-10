@@ -1,0 +1,118 @@
+# The `adaptor` Function
+
+Often, an application's state takes the form of a complex object with multiple layers. For example, it might include user profile information, settings, and other nested objects within them. In such situations, if you try to change only a specific part of the state using the `setValue` function, writing code to update only the desired value while keeping the rest unchanged can be cumbersome. This is because you might need to use the spread operator (`...`) multiple times to maintain immutability or worry about deep copying.
+
+```tsx copy showLineNumbers
+interface UserProfile {
+  id: number;
+  username: string;
+  preferences: {
+    theme: 'light' | 'dark';
+    notifications: {
+      email: boolean;
+      sms: boolean;
+    };
+  };
+  activity: {
+    postCount: number;
+    lastLogin: string;
+  };
+}
+
+export const useUserProfileStore = create<UserProfile>({
+  id: 1,
+  username: 'Alice',
+  preferences: {
+    theme: 'light',
+    notifications: {
+      email: true,
+      sms: false,
+    },
+  },
+  activity: {
+    postCount: 10,
+    lastLogin: new Date().toISOString(),
+  },
+});
+```
+```tsx copy showLineNumbers
+function UserSettings() {
+  const [userProfile, setUserProfile] = useUserProfileStore();
+
+  const toggleEmailNotifications = () => {
+    setUserProfile(prevUserProfile => ({
+      ...prevUserProfile,
+      preferences: {
+        ...prevUserProfile.preferences,
+        notifications: {
+          ...prevUserProfile.preferences.notifications,
+          email: !prevUserProfile.preferences.notifications.email,
+        },
+      },
+    }));
+  };
+
+  const incrementPostCount = () => {
+    setUserProfile(prevUserProfile => ({
+      ...prevUserProfile,
+      activity: {
+        ...prevUserProfile.activity,
+        postCount: prevUserProfile.activity.postCount + 1,
+      },
+    }));
+  };
+
+  const changeTheme = (newTheme: 'light' | 'dark') => {
+    setUserProfile(prevUserProfile => ({
+      ...prevUserProfile,
+      preferences: {
+        ...prevUserProfile.preferences,
+        theme: newTheme,
+      },
+    }));
+  };
+
+  return (
+    // ... 
+  );
+}
+```
+
+To alleviate this inconvenience, Caro-Kann provides the adaptor utility function. The adaptor function is internally implemented using Immer library's produce function, allowing developers to write code as if they are directly modifying a 'draft' version of the state object. Internally, it maintains immutability while creating a new state object, so developers can intuitively update the state without complex spread operators.
+
+
+```tsx copy showLineNumbers
+import { adaptor } from 'caro-kann/utils'
+
+function UserSettings() {
+  const [userProfile, setUserProfile] = useUserProfileStore();
+
+  const toggleEmailNotifications = () => {
+    setUserProfile(
+      adaptor(store => {
+        store.preferences.notifications.email = !store.preferences.notifications.email;
+      })
+    );
+  };
+
+  const incrementPostCount = () => {
+    setUserProfile(
+      adaptor(store => {
+        store.activity.postCount++;
+      })
+    );
+  };
+
+  const changeTheme = (newTheme: 'light' | 'dark') => {
+    setUserProfile(
+      adaptor(store => {
+        store.preferences.theme = newTheme;
+      })
+    );
+  };
+
+  return (
+    // ... 
+  );
+}
+```

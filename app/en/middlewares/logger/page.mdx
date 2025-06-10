@@ -2,7 +2,7 @@
 
 The logger middleware allows you to track state changes in real time and debug your application more effectively. It logs the previous and next state to the console every time the state updates, helping developers easily understand the flow of state changes.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   logger(initialState, options: { 
     collapsed?: boolean, 
@@ -14,7 +14,7 @@ const useStore = create(
 
 It supports various options such as timestamp display, state diff logging, and log group collapsing/expanding, allowing you to tailor the logging output to your needs. This is especially useful in applications with complex state management, helping identify bugs and understand state transitions more clearly.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   logger({ count: 0 }, { diff: true, timestamp: true })
 );

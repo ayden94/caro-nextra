@@ -1,0 +1,117 @@
+# adaptor 함수
+
+애플리케이션의 상태(state)가 여러 계층으로 이루어진 복잡한 객체 형태를 띨 때가 많습니다. 예를 들어, 사용자 프로필 정보, 설정값, 그리고 그 안에 또 다른 중첩된 객체들이 포함될 수 있습니다. 이런 상황에서 setValue 함수를 사용하여 상태의 특정 부분만 변경하려고 하면, 나머지 부분은 그대로 유지하면서 원하는 값만 업데이트하는 코드를 작성하는 것이 번거로울 수 있습니다. 불변성을 지키기 위해 전개 연산자(...)를 여러 번 사용해야 하거나, 깊은 복사를 신경 써야 하는 경우가 발생하기 때문입니다.
+
+```tsx copy showLineNumbers
+interface UserProfile {
+  id: number;
+  username: string;
+  preferences: {
+    theme: 'light' | 'dark';
+    notifications: {
+      email: boolean;
+      sms: boolean;
+    };
+  };
+  activity: {
+    postCount: number;
+    lastLogin: string;
+  };
+}
+
+export const useUserProfileStore = create<UserProfile>({
+  id: 1,
+  username: 'Alice',
+  preferences: {
+    theme: 'light',
+    notifications: {
+      email: true,
+      sms: false,
+    },
+  },
+  activity: {
+    postCount: 10,
+    lastLogin: new Date().toISOString(),
+  },
+});
+```
+```tsx copy showLineNumbers
+function UserSettings() {
+  const [userProfile, setUserProfile] = useUserProfileStore();
+
+  const toggleEmailNotifications = () => {
+    setUserProfile(prevUserProfile => ({
+      ...prevUserProfile,
+      preferences: {
+        ...prevUserProfile.preferences,
+        notifications: {
+          ...prevUserProfile.preferences.notifications,
+          email: !prevUserProfile.preferences.notifications.email,
+        },
+      },
+    }));
+  };
+
+  const incrementPostCount = () => {
+    setUserProfile(prevUserProfile => ({
+      ...prevUserProfile,
+      activity: {
+        ...prevUserProfile.activity,
+        postCount: prevUserProfile.activity.postCount + 1,
+      },
+    }));
+  };
+
+  const changeTheme = (newTheme: 'light' | 'dark') => {
+    setUserProfile(prevUserProfile => ({
+      ...prevUserProfile,
+      preferences: {
+        ...prevUserProfile.preferences,
+        theme: newTheme,
+      },
+    }));
+  };
+
+  return (
+    // ... 
+  );
+}
+```
+
+이러한 불편함을 해소하기 위해 caro-kann은 `adaptor` 유틸리티 함수를 제공합니다. adaptor 함수는 내부적으로 Immer 라이브러리의 product를 사용해 구현되었으며, 개발자가 상태 객체의 '초안(draft)' 버전을 직접 수정하는 것처럼 코드를 작성할 수 있게 해줍니다. 내부적으로는 불변성을 유지하면서 새로운 상태 객체를 생성해주기 때문에, 개발자는 복잡한 전개 연산자 없이도 직관적으로 상태를 업데이트할 수 있습니다.
+
+```tsx copy showLineNumbers
+import { adaptor } from 'caro-kann/utils'
+
+function UserSettings() {
+  const [userProfile, setUserProfile] = useUserProfileStore();
+
+  const toggleEmailNotifications = () => {
+    setUserProfile(
+      adaptor(store => {
+        store.preferences.notifications.email = !store.preferences.notifications.email;
+      })
+    );
+  };
+
+  const incrementPostCount = () => {
+    setUserProfile(
+      adaptor(store => {
+        store.activity.postCount++;
+      })
+    );
+  };
+
+  const changeTheme = (newTheme: 'light' | 'dark') => {
+    setUserProfile(
+      adaptor(store => {
+        store.preferences.theme = newTheme;
+      })
+    );
+  };
+
+  return (
+    // ... 
+  );
+}
+```

@@ -1,0 +1,116 @@
+# Provider
+
+There's one more special method hidden in `useStore`. The `Provider` method is a special feature provided by Caro-Kann that allows you to configure independent state trees while using the same store. This feature enables the creation and management of different instances of the same store within an application.
+
+Provider acts like a React component and receives the store as props. `useStore` is a means to access the store created via `create`, not the store itself. Therefore, Caro-Kann provides a `createStore` function that returns the store directly, instead of `useStore`. This allows you to provide independent state to specific component trees.
+
+```tsx copy showLineNumbers
+const useCount = create(0);
+
+const countStore = createStore(0)
+
+function App() {
+  return (
+    <div>
+      {/* Component using the default state */}
+      <Counter />
+      
+      {/* Provider with independent state */}
+      <useCount.Provider store={countStore}>
+        <Counter />
+      </useCount.Provider>
+    </div>
+  );
+}
+
+function Counter() {
+  // Each Counter uses the state of its own Provider
+  const [count, setCount] = useStore();
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(prev => prev + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+## Use Cases
+Provider is particularly useful in the following situations:
+
+* Testing environments: Provides independent state for each test, enabling isolated testing.
+* Multiple instance components: When the same component is used multiple times but needs to have independent states.
+* Theme management: When different parts of the application need to use different theme settings.
+* User-specific settings: When independent state management is needed for each user in a multi-user interface.
+
+Through Provider, you can significantly enhance the flexibility of state management and achieve both state isolation and reusability in complex applications.
+
+## Provider and Middleware
+As we will explore in more detail later, Caro-Kann's middleware adds additional functionality to create and createStore. And Provider works without issues regardless of which middleware is used or in what order, as long as the store types are the same. It even works correctly if different middlewares are applied to create and createStore, as shown in the example below.
+```tsx copy showLineNumbers
+const useCount = create(logger(persist(0, { local: 'count' })));
+
+const countStore = createStore(debounce(devtools(0, 'countStore')))
+
+function App() {
+  return (
+    <div>
+      {/* Component using the default state */}
+      <Counter />
+      
+      {/* Provider with independent state */}
+      <useCount.Provider store={countStore}>
+        <Counter />
+      </useCount.Provider>
+    </div>
+  );
+}
+
+function Counter() {
+  // Each Counter uses the state of its own Provider
+  const [count, setCount] = useStore();
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(prev => prev + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+However, there is one exception. If the reducer middleware is used with the create function, the same reducer middleware must also be used with the createStore function, and vice versa. This is because the reducer middleware modifies the behavior of setValue, the core function for changing the store's state. Therefore, if the usage of reducer middleware is inconsistent between create and createStore, unexpected issues can arise in the state update logic.
+
+Fortunately, when using TypeScript, Caro-Kann internally and automatically identifies the middleware applied to each store. If an inconsistency in reducer middleware usage is detected, it informs the developer with the following warning message:
+
+> "Warning: Reducer usage must be consistent. Both should use reducers, or neither should."
+
+This helps prevent potential errors that might occur during the development process.
+
+```tsx copy showLineNumbers
+const useBear = create(reducer(
+  (state, action: { type: 'increment' | 'decrement' }) => {
+    switch (action.type) {
+      case 'increment':
+        return { ...state, age: state.age + 1 };
+      case 'decrement':
+        return { ...state, age: state.age - 1 };
+      default:
+        return state;
+    }
+  }
+, logger({ name: 'useBear', age: 18, status: { count: 0 }, fn: () => console.log('fn') })));
+
+const bearStore = createStore(devtools({ name: 'useBear', age: 18, status: { count: 0 }, fn: () => console.log('fn') }, "useBear"));
+
+function test() {
+  return (
+    <useBear.Provider store={bearStore}>
+      <Component1 />
+      <Component2 />
+    </useBear.Provider>
+  )
+}
+```
+![Alt text](/images/provider.png)

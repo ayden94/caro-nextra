@@ -1,0 +1,130 @@
+# merge 함수
+
+merge 함수는 여러 개의 독립적인 useStore 훅을 하나의 통합된 useStore 훅처럼 사용할 수 있도록 묶어주는 유용한 유틸리티입니다. 애플리케이션의 규모가 커지면서 상태를 기능별 또는 도메인별로 분리하여 여러 개의 작은 스토어로 관리하는 경우가 많아집니다. 예를 들어, 장바구니 상태를 관리하는 useCart 스토어와 사용자 프로필 정보를 관리하는 useUserProfile 스토어가 있을 수 있습니다.
+
+이때 특정 컴포넌트에서 장바구니 정보와 사용자 프로필 정보가 모두 필요한 상황이 발생할 수 있습니다. merge 함수가 없다면, 해당 컴포넌트 내에서 useCart()와 useUserProfile()을 각각 호출해야 할 것입니다. 이는 컴포넌트 내에 여러 개의 상태 구독 로직이 생기게 만들어 코드를 다소 장황하게 만들 수 있습니다.
+
+```tsx copy showLineNumbers
+export type Product = {
+  id: string,
+  name: string,
+  price: number,
+  imageUrl?: string,
+  description?: string,
+}
+
+export const useCart = create<Array<Product>>([])
+
+export const useUserProfile = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+```
+merge 함수는 이러한 상황을 개선하기 위해 등장했습니다. ***최대 여덟 개***의 useStore 훅을 하나의 객체로 묶어 useStore와 유사한 useMergedStore 훅을 생성합니다. 이 새로운 훅을 사용하면, 단 한 번의 호출로 관련된 여러 스토어의 상태를 한 번에 가져오고, 해당 상태들을 업데이트할 수 있는 단일화된 setValue 함수를 제공받게 됩니다. 이는 "바텀업(Bottom-up)" 방식으로, 개별적으로 잘 정의된 작은 스토어들을 필요에 따라 조합하여 더 큰 상태 로직을 구성할 수 있게 해줍니다. 결과적으로 컴포넌트의 코드가 간결해지고, 상태 접근 및 관리의 일관성이 높아집니다.
+
+```tsx copy showLineNumbers
+export const useUserProfileAndCart = merge({ 
+  cart: useCart,
+  userProfile: useUserProfile
+})
+```
+
+useMergedStore는 선택자 함수나 useStore가 제공하는 readOnly와 writeOnly 메서드도 동일하게 사용할 수 있습니다. 하지만 Provider는 제공되지 않습니다. 이는 merge 함수 자체가 이미 독립적으로 생성되고 관리될 수 있는 여러 스토어 인스턴스(또는 스토어 접근 훅)를 조합하는 데 초점을 맞추고 있기 때문입니다.
+
+## getStoreFrom
+
+useSomeStore.Provider 컴포넌트 하위에서 렌더링되는, merge 함수로 생성된 병합 스토어(예: useMergedStore)는 기본적으로 각 구성 요소 스토어에 대해 가장 가까운 Provider 컨텍스트를 따릅니다. 예를 들어, useUserProfile을 포함하는 useMergedStore가 useUserProfile.Provider 내부에 있다면, useMergedStore의 userProfile 부분은 해당 Provider가 제공하는 스토어 인스턴스에서 값을 가져옵니다.
+
+하지만 merge 함수는 두 번째 선택적 인자로 `getStoreFrom` 옵션을 받을 수 있습니다. 이 옵션은 객체 형태로, 병합에 사용된 각 useStore 키에 대해 해당 스토어가 값을 어디서 가져올지를 명시적으로 지정할 수 있게 해줍니다. 각 키에 대해 'context' 또는 'root' 값을 설정할 수 있습니다.
+
+* `'context'` (또는 옵션 생략 시 기본 동작): 해당 useStore 부분은 가장 가까운 Provider 컨텍스트를 따릅니다. 만약 감싸는 Provider가 없다면, create로 생성된 최상위(전역) 스토어를 사용합니다.
+* `'root'`: 해당 useStore 부분은 Provider 컨텍스트의 존재 여부와 관계없이 항상 create로 생성된 최상위(전역) 스토어에서 직접 값을 가져옵니다.
+
+이 getStoreFrom 옵션을 통해 개발자는 병합된 스토어의 각 부분이 어떤 스코프의 상태를 참조할지 세밀하게 제어할 수 있어, 복잡한 애플리케이션 아키텍처에서 유연성을 크게 높일 수 있습니다.
+
+```tsx copy showLineNumbers
+import { create, createStore } from 'caro-kann'; // caro-kann 라이브러리에서 함수들을 가져온다고 가정
+import { merge } from 'caro-kann/utils'
+
+// --- 개별 스토어 정의 ---
+// 1. 사용자 설정 관련 최상위(Root) 스토어
+export const useUserPreferences = create({
+  theme: 'light',
+  language: 'en',
+  source: 'Root Preferences Store',
+});
+
+// 2. 알림 설정 관련 최상위(Root) 스토어
+export const useNotificationSettings = create({
+  emailEnabled: true,
+  pushEnabled: true,
+  source: 'Root Notifications Store',
+});
+
+// --- Provider에 제공될 특정 스토어 인스턴스 ---
+// 사용자 설정 Provider를 위한 스토어 인스턴스
+export const preferencesStoreForProvider = createStore({
+  theme: 'dark',
+  language: 'ko',
+  source: 'Provider Preferences Instance',
+});
+
+// 알림 설정 Provider를 위한 스토어 인스턴스 (이 예제에서는 사용하지 않지만, 개념 설명용)
+export const notificationsStoreForProvider = createStore({
+  emailEnabled: false,
+  pushEnabled: false,
+  source: 'Provider Notifications Instance',
+});
+
+
+// --- 병합된 스토어 정의 ---
+// 기본 동작: 모든 부분이 컨텍스트를 따름 (명시적으로 'context'를 지정하거나 생략)
+export const useMergedSettingsDefault = merge({
+  prefs: useUserPreferences,      // Provider 내부에서는 Provider의 store를 사용
+  notifs: useNotificationSettings, // Provider 내부에서는 Provider의 store를 사용 (해당 Provider가 있다면)
+}
+// getStoreFrom 옵션을 생략하면 기본적으로 'context'로 동작
+// , { prefs: 'context', notifs: 'context' } // 이렇게 명시해도 동일
+);
+
+// prefs는 Provider를 따르고, notifs는 항상 root를 참조
+export const useMergedSettingsMixed = merge(
+  {
+    prefs: useUserPreferences,
+    notifs: useNotificationSettings,
+  },
+  { // 두 번째 인자: getStoreFrom 옵션
+    prefs: 'context', // useUserPreferences 부분은 컨텍스트를 따름
+    notifs: 'root',   // useNotificationSettings 부분은 항상 최상위 스토어를 참조
+  }
+);
+
+// 모든 부분이 항상 root를 참조
+export const useMergedSettingsAllRoot = merge(
+  {
+    prefs: useUserPreferences,
+    notifs: useNotificationSettings,
+  },
+  {
+    prefs: 'root',
+    notifs: 'root',
+  }
+);
+```
+
+## 제한 사항
+
+merge 함수는 여러 useStore 훅을 편리하게 조합할 수 있는 강력한 기능을 제공하지만, 몇 가지 제한 사항을 가지고 있습니다.
+
+1. **reducer 미들웨어 사용 스토어 병합 불가**: reducer 미들웨어를 사용하여 생성된 useStore 훅은 merge 함수를 통해 다른 스토어와 병합할 수 없습니다. 시도할 경우, 타입스크립트 환경에서는 타입 에러가 발생하여 이를 미리 방지합니다. 이는 reducer 미들웨어가 setValue 함수의 동작 방식을 근본적으로 변경하고, 상태 업데이트 로직이 일반적인 useStore와 다르기 때문입니다. merge 함수는 각 useStore가 표준적인 [value, setValue] 인터페이스를 따른다고 가정하고 동작하므로, reducer를 사용한 스토어와의 호환성 문제가 발생할 수 있습니다.
+2. **최대 병합 개수 제한**: 앞서 스쳐 지나가듯 언급했던 것처럼, merge 함수는 한 번에 최대 8개의 useStore 훅까지만 병합할 수 있습니다. 8개를 초과하는 스토어를 병합하려고 하면 다음과 같은 오류가 발생합니다.
+
+> Error: merge function can only merge up to 8 stores at a time. Please reduce the number of stores you are trying to merge.
+
+이러한 제한이 있는 주된 이유는 두 가지입니다.
+* **React 훅 규칙**: merge 함수 내부적으로 각 useStore의 컨텍스트 값을 가져오기 위해 useContext를 사용하고 있습니다. React 훅은 반복문이나 조건문 내에서 호출될 수 없다는 규칙이 있어, 동적으로 무한한 수의 컨텍스트를 처리하는 데 제약이 따릅니다.
+* **성능 고려**: 이론적으로 더 많은 스토어를 병합할 수 있도록 구현할 수도 있겠지만, 병합하는 스토어의 수가 늘어날수록 내부적으로 처리해야 할 로직이 복잡해지고, 상태 변경 시 구독 및 업데이트 과정에서 잠재적인 성능 저하가 발생할 수 있습니다. 8개라는 제한은 사용성과 성능 사이의 균형을 고려한 결정으로 볼 수 있습니다.
+
+또한 merge 함수가 리턴하는 것은 useStore가 아니라 useMergedStore인 까닭에 여러 merge 결과를 다시 조합하는 것은 근본적으로 불가능합니다. 이러한 제한 사항을 이해하고 merge 함수를 사용하면, 애플리케이션의 상태 관리 구조를 효과적으로 설계하고 예기치 않은 문제를 방지하는 데 도움이 될 것입니다.

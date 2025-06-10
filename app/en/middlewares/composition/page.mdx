@@ -6,7 +6,7 @@ For example, when using the logger, validate, and debounce middlewares together,
 
 Unlike other middlewares, the reducer middleware must be placed immediately below the create function. This is because the reducer returns dispatch instead of setState.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   reducer(
     (store, { type, payload = 1 }: { type: string, payload?: number }) => {
@@ -48,7 +48,7 @@ Most middleware can be composed freely without any specific restrictions. Develo
 
 For example, in the case below, the execution order of the persist and validate middleware does not affect the result, as both middleware do not influence each other's behavior.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   persist(validate({ count: 0 }, zSchema), { local: "count" })
 );
@@ -60,7 +60,7 @@ const useStore = create(
 
 On the other hand, in the following example, the behavior depends on the order in which the debounce and logger middleware are composed. If logger is executed first, all state change logs will be recorded before debouncing. Conversely, if debounce is executed first, any state changes within a short time frame will be ignored, and only the final change will be logged. This shows that some middleware can influence each other's behavior, so it's important to carefully consider the meaning of the composition order when deciding on the sequence.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   debounce(logger({ count: 0 }, { diff: true, timestamp: true }), 3000)
 );

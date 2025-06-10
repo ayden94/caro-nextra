@@ -2,7 +2,7 @@
 
 Caro-Kann allows global state to be stored in local storage, session storage, and cookies. This feature is especially important for improving user experience and is suitable for values that need to persist even after a page refresh or session termination, such as the theme settings of a webpage.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   persist(initialState, persistOptions)
 )
@@ -10,7 +10,7 @@ const useStore = create(
 
 When storing global state in Caro-Kann, the state is stored alongside a version. This allows the application to easily transform or disregard data from previous versions if the state structure changes.
 
-```tsx
+```tsx copy showLineNumbers
 type Theme = "light" | "dark";
  
 const useStore = create<Theme>(
@@ -31,7 +31,7 @@ const useStore = create<Theme>(
 
 For example, suppose the theme needs to support not only background color but also font size. Caro-Kann handles this by using the migrate array. When a migrate object is present, Caro-Kann automatically checks for version differences whenever a client connects to the service. If the client's state is not up to date, it calls the appropriate function(s) in the array to transform the old state into the updated version, ensuring the client always works with the latest schema.
 
-```tsx
+```tsx copy showLineNumbers
 type Theme = { color: "light" | "dark", fontSize: number };
  
 const useStore = create<Theme>(
@@ -54,7 +54,7 @@ We successfully used migrate to update version 0 to version 1. However, a few we
 
 But don't worry! To address this, the migrate array is structured like a pipeline.
 
-```tsx
+```tsx copy showLineNumbers
 type Theme = { color: "light" | "dark", ["font-size"]: number };
 
 const useStore = create<Theme>(

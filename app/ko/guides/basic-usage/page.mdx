@@ -1,0 +1,116 @@
+# useStore의 기본 사용법
+
+앞서 살펴본 바와 같이 useStore는 리액트의 useState 훅과 동일하게 [ value, setValue ] 로 이루어진 튜플을 리턴합니다. 따라서 리액트에 익숙한 개발자라면 누구라도 쉽게 useStore를 사용할 수 있습니다.
+
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const [value, setValue] = useStore();
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+```
+
+## 선택자 함수
+
+위에서 살펴본 코드는 한 가지 문제를 안고 있습니다. 컴포넌트 내에서 필요한 상태는 email과 name, 그리고 phoneNumber이지만, useStore는 전체 store를 구독하고 있다는 사실입니다. 따라서 다른 곳에서 age 값이 변경될 경우, age 값이 필요하지 않은 ProfileCard 컴포넌트도 리랜더링 될 것입니다.
+
+이러한 문제를 해결하기 위해 useStore 훅은 선택자 함수를 인자로 받을 수 있습니다. 선택자 함수를 사용하면 컴포넌트가 실제로 필요한 상태만 구독하여 불필요한 리랜더링을 방지할 수 있습니다. 이는 특히 상태 객체가 크고 복잡하거나, 성능이 중요한 애플리케이션에서 렌더링 최적화에 큰 도움이 됩니다.
+
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const [value, setValue] = useStore(store => ({
+    email: store.email,
+    name: store.name,
+    phoneNumber: store.phoneNumber,
+  }));
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+```
+
+## 파생 상태
+
+선택자 함수는 필요한 상태만을 구독하여 불필요한 리렌더링을 방지할 뿐 아니라, 기존 상태를 변형하거나 계산하여 새로운 파생 상태를 만들 수도 있습니다.
+
+예를 들어, 장바구니 아이템 목록에서 총 가격을 계산하거나, 사용자 데이터에서 성인 여부를 판단하는 등 복잡한 로직을 컴포넌트 외부로 분리할 수 있습니다. 이러한 접근 방식은 UI 컴포넌트를 더 간결하게 유지하고, 상태 로직을 재사용 가능한 형태로 관리할 수 있게 해줍니다.
+
+```tsx copy showLineNumbers
+export const useCart = create<Array<Product>>([])
+
+function Cart() {
+  const [value, setValue] useCart(prev => {
+    store: prev,
+    totalPrice: prev.reduce((sum, item) => sum + item.price, 0)
+  })
+
+  return (
+    <div>
+      {value.store.map( ... )}
+      <h3>장바구니 합계: {value.totalPrice}원</h3>
+    </div>
+  )
+}
+```
+
+## readOnly와 writeOnly 메서드
+
+useStore는 [ value, setValue ] 로 이루어진 튜플을 리턴합니다. 그런데 꼭 그래야 할까요? 지금까지 살펴본 ProfileCard 컴포넌트는 상태를 가져와 사용할 뿐, 상태를 변경하는 기능은 필요하지 않습니다. 이런 경우 setValue 함수는 사용되지 않아 불필요한 자원이 될 수 있습니다.
+
+이러한 상황을 해결하기 위해 useStore는 readOnly와 writeOnly 메서드를 제공합니다. readOnly 메서드는 상태를 읽기만 하는 컴포넌트를 위한 것으로, 상태 값만 반환하고 업데이트 함수는 제공하지 않습니다. 반대로 writeOnly 메서드는 상태를 변경만 하고 구독은 하지 않을 때 사용할 수 있습니다. 이를 통해 컴포넌트의 실제 필요에 맞게 최적화된 인터페이스를 사용할 수 있습니다.
+
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const value = useStore.readOnly(store => ({
+    email: store.email,
+    name: store.name,
+    phoneNumber: store.phoneNumber,
+  }));
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+```

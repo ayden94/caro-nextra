@@ -1,0 +1,136 @@
+# Basic Usage of useStore
+
+As we've seen before, `useStore` returns a tuple of `[value, setValue]`, just like React's `useState` hook. Therefore, any developer familiar with React can easily use `useStore`.
+
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const [value, setValue] = useStore();
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+```
+
+## GitHub Copilot
+
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const [value, setValue] = useStore();
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+## Selector Functions
+
+The code we looked at above has one problem. Although the component only needs the email, name, and phoneNumber states, useStore is subscribing to the entire store. Therefore, if the age value changes elsewhere, the ProfileCard component, which doesn't need the age value, will also re-render.
+
+To solve this problem, the useStore hook can take a selector function as an argument. By using a selector function, components can subscribe only to the state they actually need, preventing unnecessary re-renders. This is particularly helpful for rendering optimization in applications where the state object is large and complex, or where performance is critical.
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const [value, setValue] = useStore(store => ({
+    email: store.email,
+    name: store.name,
+    phoneNumber: store.phoneNumber,
+  }));
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+```
+
+## Derived State
+
+Selector functions not only prevent unnecessary re-renders by subscribing only to the required state but can also transform or calculate existing state to create new derived state.
+
+For example, you can separate complex logic, such as calculating the total price from a list of cart items or determining adulthood from user data, outside the component. This approach helps keep UI components concise and allows state logic to be managed in a reusable form.
+
+```tsx copy showLineNumbers
+export const useCart = create<Array<Product>>([])
+
+function Cart() {
+  const [value, setValue] useCart(prev => {
+    store: prev,
+    totalPrice: prev.reduce((sum, item) => sum + item.price, 0)
+  })
+
+  return (
+    <div>
+      {value.store.map( ... )}
+      <h3>Cart Total: {value.totalPrice} KRW</h3>
+    </div>
+  )
+}
+```
+
+## readOnly and writeOnly Methods
+useStore returns a tuple of [value, setValue]. But does it always have to? The ProfileCard component we've looked at so far only fetches and uses state; it doesn't need the functionality to change state. In this case, the setValue function is unused and can be an unnecessary resource.
+
+To address this situation, useStore provides readOnly and writeOnly methods. The readOnly method is for components that only read state, returning only the state value and not providing an update function. Conversely, the writeOnly method can be used when you only want to change state and not subscribe to it. This allows you to use an optimized interface tailored to the actual needs of the component.
+```tsx copy showLineNumbers
+const useStore = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+
+function ProfileCard() {
+  const value = useStore.readOnly(store => ({
+    email: store.email,
+    name: store.name,
+    phoneNumber: store.phoneNumber,
+  }));
+  
+  return (
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
+  )
+}
+```

@@ -3,7 +3,7 @@
 
 devtools 미들웨어를 사용하면 상태 관리가 더욱 직관적이고 효율적으로 이루어집니다. 이 미들웨어는 Redux DevTools 확장 프로그램을 통해 애플리케이션의 상태 변화를 실시간으로 추적할 수 있게 해줍니다. 개발자는 상태가 어떻게 변경되는지 명확히 알 수 있으며, 이를 통해 디버깅과 최적화가 용이해집니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   devtools(initialState, storeName)
 )
@@ -12,7 +12,7 @@ const useStore = create(
 
 예를 들어, devtools 미들웨어를 사용하여 count 상태를 관리하는 예시는 다음과 같이 실시간으로 상태 변화를 관찰하고, 버튼 클릭 시 상태를 증가시키거나 감소시킬 때마다 Redux DevTools에서 변화가 기록되는 모습을 확인할 수 있습니다. 이 방식은 특히 복잡한 상태 관리 및 디버깅을 단순화하고, 개발자의 작업 효율성을 크게 향상시킵니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   devtools({ count: 0 }, "devtoolsTestStore")
 );

@@ -8,7 +8,7 @@
 
 그리고 caro-kann으로부터 create 함수를 가져와 전역 상태 store를 생성합니다. 이 create 함수가 리턴하는 useCart는 장바구니 상태를 관리하는 훅입니다. 컴포넌트 내에서는 useCart 훅을 통해 전역 상태 조회 및 변경, 파생 상태 구현 등을 처리합니다.
 
-```tsx
+```tsx copy showLineNumbers
 export type Product = {
   id: string,
   name: string,
@@ -26,7 +26,7 @@ ProductBind는 productList를 받아서 각 제품에 대해 ProductCard를 렌�
 
 ProductCard 컴포넌트 내에서 useCart 훅을 사용하고 있습니다. useCart 훅은 useState와 동일하게 value와 setValue로 이루어진 튜플을 리턴합니다. 이를 통해 장바구니 상태를 가져오거나 장바구니를 업데이트할 수 있습니다.
 
-```tsx
+```tsx copy showLineNumbers
 function ProductBind({ productList }: { productList: Array<Product> }) {
   return (
     <>
@@ -58,7 +58,7 @@ Header 컴포넌트는 장바구니에 담긴 제품의 개수를 시각적으�
 
 derived 프로퍼티는 현재 상태에서 특정 값을 계산해내는 데 사용되는 유틸리티로, 여기서는 장바구니 배열의 길이를 계산하여 제품 개수를 반환합니다. 이를 통해 상태 전체를 직접 참조하지 않고도 필요한 파생값만 효율적으로 추출할 수 있으며, 성능 측면에서도 불필요한 리렌더링을 줄이는 데 도움이 됩니다.
 
-```tsx
+```tsx copy showLineNumbers
 function Header() {
   const cartLength = useCart.derived(store => store.length)
 
@@ -90,7 +90,7 @@ function Header() {
 
 장바구니 모달은 Cart와 CartCard 두 컴포넌트로 구성됩니다. useCart 훅을 통해 전역 상태로 관리되는 장바구니 데이터를 불러오고, 각 제품을 화면에 렌더링합니다. Cart 컴포넌트는 장바구니에 담긴 제품 리스트를 순회하며, 각 제품에 대해 CartCard를 렌더링합니다. key는 제품의 id로 설정하여 React가 각 요소를 고유하게 식별할 수 있도록 합니다.
 
-```tsx
+```tsx copy showLineNumbers
 function Cart() {
   const [cart, setCart] = useCart();
 
@@ -107,7 +107,7 @@ function Cart() {
 
 CartCard는 제품 정보를 보여주는 동시에, 장바구니에서 해당 제품을 제거하는 버튼을 제공합니다. 버튼 클릭 시 setCart를 통해 현재 상태에서 해당 제품을 제외한 새로운 배열로 상태를 갱신합니다.
 
-```tsx
+```tsx copy showLineNumbers
 function CartCard({ product }: { product: Product }) {
   const [cart, setCart] = useCart();
 
@@ -127,7 +127,7 @@ function CartCard({ product }: { product: Product }) {
 
 기존에는 useCart 훅이 setCart를 통해 배열 상태를 직접 조작하는 구조였지만, reducer를 사용하면 액션 기반으로 상태를 관리할 수 있습니다. 이는 로직의 예측 가능성과 유지보수성을 높이고, 상태 전이 과정을 보다 명확하게 합니다. 이러한 방식은 장바구니 기능이 복잡해지거나, 이벤트 기반으로 다양한 조작이 필요할 때 매우 유용합니다.
 
-```tsx
+```tsx copy showLineNumbers
 const cartReduceFn = (
   state: Array<Product>,
   action:
@@ -160,7 +160,7 @@ export const useCart = create(reducer(cartReduceFn, []))
 
 이제 useCart 훅은 setCart 대신 dispatch 함수를 통해 상태를 조작하게 됩니다. 각 컴포넌트에서는 명확한 액션 타입과 페이로드를 전달함으로써 상태 변경의 의도를 분명히 표현할 수 있으며, 이는 코드의 가독성과 확장성을 크게 높여줍니다. 예를 들어 ProductCard에서는 "ADD_ITEM" 액션을, CartCard에서는 "REMOVE_ITEM" 액션을, Cart에서는 "CLEAR_CART" 액션을 각각 디스패치하여 장바구니 상태를 제어합니다.
 
-```tsx
+```tsx copy showLineNumbers
 function ProductCard({ product }: { product: Product }) {
   const [cart, dispatch] = useCart()
 
@@ -201,7 +201,7 @@ function CartCard({ product }: { product: Product }) {
 
 persist는 상태가 변경될 때마다 지정한 스토리지(localStorage 등)에 자동으로 데이터를 저장하고, 초기 렌더링 시 해당 데이터를 불러와 상태를 복원해줍니다. 이 방식을 통해 사용자는 페이지를 떠났다가 다시 돌아와도 이전에 담았던 장바구니 내용을 그대로 확인할 수 있으며, 개발자는 별도의 저장 로직 없이도 상태의 영속성을 간편하게 구현할 수 있습니다.
 
-```tsx
+```tsx copy showLineNumbers
 export const useCart = create(
   reducer(
     cartReduceFn,
@@ -215,7 +215,7 @@ export const useCart = create(
 
 개발 과정에서 caro-kann이 어떻게 동작하는지 확인하고 싶다면 logger나 devtools 미들웨어를 사용할 수 있습니다. devtools는 상태 롤백이나 리셋 등 다양한 기능 및 시각적 디버깅 기능이 있지만, 장바구니가 잘 동작하는지 간단히 확인하는 정도라면 logger로도 충분합니다.
 
-```tsx
+```tsx copy showLineNumbers
 export const useCart = create(
   reducer(
     cartReduceFn,

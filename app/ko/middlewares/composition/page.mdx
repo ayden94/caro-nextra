@@ -6,7 +6,7 @@ reducer 미들웨어를 제외한 Caro-Kann의 다른 모든 미들웨어들은 
 
 다른 미들웨어들과 달리, reducer 미들웨어는 오직 create 함수 바로 아래에만 위치할 수 있습니다. 이는 reducer가 setState 대신 dispatch를 반환하기 때문입니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   reducer(
     (store, { type, payload = 1 }: { type: string, payload?: number }) => {
@@ -48,7 +48,7 @@ export default function Page() {
 
 예를 들어, 아래와 같은 경우에는 persist와 validate 미들웨어의 실행 순서에 관계없이 항상 동일한 결과를 보장합니다. 이는 두 미들웨어가 서로의 동작에 영향을 주지 않기 때문입니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   persist(validate({ count: 0 }, zSchema), { local: "count" })
 );
@@ -60,7 +60,7 @@ const useStore = create(
 
 반면, 아래 예제에서는 debounce와 logger 미들웨어의 합성 순서에 따라 동작이 달라집니다. logger가 먼저 실행되면 디바운싱 이전의 모든 상태 변경 로그가 기록되며, 반대로 debounce가 먼저 실행되면 일정 시간 내 중복된 상태 변경은 무시되고 최종 변경만 로깅됩니다. 이처럼 일부 미들웨어는 서로의 동작 방식에 영향을 주기 때문에, 합성 순서를 결정할 때 그 의미를 충분히 고려해야 합니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   debounce(logger({ count: 0 }, { diff: true, timestamp: true }), 3000)
 );

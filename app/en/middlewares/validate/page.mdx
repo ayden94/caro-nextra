@@ -4,7 +4,7 @@ The validate middleware is a powerful tool that brings robust type safety to sta
 
 One of its key strengths is seamless integration with popular validation libraries such as Zod, Yup, and Superstruct, allowing developers to continue using familiar tools.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   validate(initialState, ValidateSchema)
 )
@@ -14,7 +14,7 @@ The true value of the validate middleware lies in its proactive approach that si
 
 This is particularly useful when handling complex forms or storing API response data in the state. It effectively extends TypeScript’s static type checking into runtime, giving developers confidence in the integrity of their application state and allowing them to focus more on business logic.
 
-```tsx
+```tsx copy showLineNumbers
 import { z } from "zod";
 import * as yup from "yup";
 import { object, number } from "superstruct";

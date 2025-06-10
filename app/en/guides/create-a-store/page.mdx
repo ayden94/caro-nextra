@@ -1,26 +1,32 @@
-# Create a store
+# Creating a Store
 
-In Caro-Kann, a **store** is defined as an external space where the global state is stored. To create such a store, Caro-Kann uses the `create` function. This function takes an initial value, stores it in the internal store, and returns `useStore`. It is important to remember that the evaluation of the create function must occur outside of the component. Otherwise, the store may be lost depending on the component's lifecycle.
+In Caro-Kann, a store is defined as an external space where global state is saved. To create such a store, you must use the `create` function provided by Caro-Kann. This function takes the initial value of the state as a parameter, stores it in an internal store, and returns a `useStore` hook.
+
+The `create` function must be called outside of a component. If called inside a component, a new store will be created every time the component re-renders, causing the previous state to be lost. This behavior contradicts the purpose of global state management, so special care must be taken.
 
 ```ts
 const useStore = create({
+  email: "wpfekdml@me.com",
   name: "Ayden Blair",
+  phoneNumber: "010-****-****",
   age: 30,
-  isMarried: false,
 });
 ```
 
-useStore is a custom hook that return `[value, setValue]` tuple just like useState in React.js.
+The useStore hook is the only way to access the store created through the create function, and it returns a tuple of [value, setValue], just like React's useState hook.
 
-```tsx
-function Comp() {
+```tsx copy showLineNumbers
+function ProfileCard() {
   const [value, setValue] = useStore();
   
   return (
-    <>
-      <div>{ value.name } is { value.age } years old.</div>
-      <div>and { value.name } is { value && "not " }married.</div>
-    </>
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
   )
 }
 ```

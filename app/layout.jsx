@@ -27,12 +27,10 @@ export default async function RootLayout({ children, params }) {
           navbar={navbar}
           pageMap={
             [
-              { "data": {} },
               {
                 "name": "intro",
                 "route": "/",
                 "title": "Introduce the caro-kann",
-                "frontMatter": {}
               },
               {
                 "name": "tutorials",
@@ -48,26 +46,34 @@ export default async function RootLayout({ children, params }) {
                     "name": "create-a-store",
                     "route": "/guides/create-a-store",
                     "title": "Create a store",
-                    "frontMatter": {}
                   },
                   {
-                    "name": "derided-state",
-                    "route": "/guides/derided-state",
-                    "title": "Derided state",
-                    "frontMatter": {}
+                    "name": "basic-usage",
+                    "route": "/guides/basic-usage",
+                    "title": "Basic usage",
                   },
                   {
-                    "name": "updating-state",
-                    "route": "/guides/updating-state",
-                    "title": "Updating state",
-                    "frontMatter": {}
-                  },
-                  {
-                    "name": "selector-functions",
-                    "route": "/guides/selector-functions",
-                    "title": "Selector functions",
-                    "frontMatter": {}
+                    "name": "provider",
+                    "route": "/guides/provider",
+                    "title": "Provider",
                   }
+                ]
+              },
+              {
+                "name": "utils",
+                "title": "Utils",
+                "route": null,
+                "children": [
+                  {
+                    "name": "adaptor",
+                    "route": "/utils/adaptor",
+                    "title": "Adaptor",
+                  },
+                  {
+                    "name": "merge",
+                    "route": "/utils/merge",
+                    "title": "Merge",
+                  },
                 ]
               },
               {
@@ -106,17 +112,12 @@ export default async function RootLayout({ children, params }) {
                     "title": "reducer",
                   },
                   {
-                    "name": 'zustand',
-                    "route": "/middlewares/zustand",
-                    "title": "zustand",
-                  },
-                  {
                     "name": "composition",
                     "route": "/middlewares/composition",
                     "title": "Middleware Composition",
                   }
                 ]
-              }
+              },
             ]
           }
           i18n={[

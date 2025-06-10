@@ -3,7 +3,7 @@
 
 The reducer middleware in Caro-Kann handles centralized state transformations, making state changes predictable and consistent. This pattern, commonly used in Redux, is designed to update state while maintaining immutability. The reducer middleware primarily changes state through actions, centralizing state update logic.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   reducer(reduceFn, initialState)
 )
@@ -11,7 +11,7 @@ const useStore = create(
 
 When the reducer middleware is used, useStore returns a tuple [value, dispatch] instead of [value, setValue]. The dispatch function takes an action object as its argument, triggering the logic defined in the reduceFn to update the state. The reduceFn is responsible for updating the state based on the type of each action, using the type and payload properties of the action object to define the update logic.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   reducer((store, { type, payload = 1 }: { type: string, payload?: number }) => {
     switch (type) {

@@ -1,26 +1,32 @@
 # store 만들기
 
-caro-kann에서 store는 전역 상태가 저장되어있는 외부 공간으로 정의합니다. 이러한 store를 만들기 위해서 caro-kann은 `create` 함수를 사용합니다. 이 함수는 초기값을 받아 이를 내부 store에 저장하고 `useStore`를 리턴합니다. 꼭 기억해두어야 할 사실은, create 함수의 평가는 반드시 컴포넌트 외부에서 이루어져야 한다는 점입니다. 그렇지 않으면 컴포넌트의 생애주기에 따라 store가 소실될 수 있습니다.
+caro-kann에서 store는 전역 상태가 저장되어있는 외부 공간으로 정의됩니다. 이러한 store를 만들기 위해서는 caro-kann이 제공하는 `create` 함수를 사용해야 합니다. 이 함수는 상태의 초기값을 매개변수로 받아 이를 내부 store에 저장하고 `useStore` 훅을 리턴합니다.
+
+create 함수는 반드시 컴포넌트 외부에서 호출해야 합니다. 컴포넌트 내부에서 호출하면 컴포넌트가 리렌더링될 때마다 새로운 store가 생성되어 이전 상태가 소실됩니다. 이는 전역 상태 관리의 목적에 반하는 동작이므로 각별히 주의해야 합니다.
 
 ```ts
 const useStore = create({
+  email: "wpfekdml@me.com",
   name: "Ayden Blair",
+  phoneNumber: "010-****-****",
   age: 30,
-  isMarried: false,
 });
 ```
 
-useStore 훅은 리액트의 useState 훅과 동일하게 [ value, setValue ] 로 이루어진 튜플을 리턴합니다. 
+useStore 훅은 create 함수를 통해 만들어진 store에 접근할 수 있는 유일한 방법이며, 리액트의 useState 훅과 동일하게 [ value, setValue ] 로 이루어진 튜플을 리턴합니다.
 
-```tsx
-function Comp() {
+```tsx copy showLineNumbers
+function ProfileCard() {
   const [value, setValue] = useStore();
   
   return (
-    <>
-      <div>{ value.name } is { value.age } years old.</div>
-      <div>and { value.name } is { value && "not " }married.</div>
-    </>
+    <div class={style.root}>
+      <div>name: {value.name}</div>
+      <div>
+        <div>email: {value.email}</div>
+        <div>phone: {value.phoneNumber}</div>
+      </div>
+    </div>
   )
 }
 ```

@@ -3,7 +3,7 @@
 
 reducer 미들웨어는 상태 관리에서 중앙 집중식 상태 변환을 처리하는 방식으로, 상태의 변경을 예측 가능하고 일관성 있게 유지할 수 있게 합니다. 이 패턴은 주로 Redux에서 사용하는 방식으로, 상태를 불변성을 유지하며 업데이트하도록 설계되어 있습니다. reducer 미들웨어는 주로 액션(action)을 통해 상태를 변경하며, 상태 업데이트 로직을 중앙에서 관리하게 됩니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   reducer(reduceFn, initialState)
 )
@@ -11,7 +11,7 @@ const useStore = create(
 
 reducer 미들웨어를 사용하면 useStore는 [value, setValue] 대신 [value, dispatch] 튜플을 반환합니다. dispatch 함수는 action 객체를 인자로 받으며, 이를 통해 reduceFn의 로직을 트리거하여 상태를 변경할 수 있습니다. reduceFn은 각 액션의 타입에 따라 상태를 업데이트하는 역할을 하며, 액션 객체의 type과 payload를 기반으로 상태를 변경하는 로직을 정의합니다.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create(
   reducer((store, { type, payload = 1 }: { type: string, payload?: number }) => {
     switch (type) {

@@ -1,0 +1,131 @@
+# The `merge` Function
+
+The `merge` function is a useful utility that bundles multiple independent `useStore` hooks to act like a single, unified `useStore` hook. As applications grow in scale, it often becomes common to manage state by separating it into multiple smaller stores based on features or domains. For example, you might have a `useCart` store for managing cart state and a `useUserProfile` store for managing user profile information.
+
+In such cases, a specific component might require both cart information and user profile information. Without the `merge` function, you would have to call `useCart()` and `useUserProfile()` separately within that component. This could lead to multiple state subscription logics within the component, making the code somewhat verbose.
+
+```tsx copy showLineNumbers
+export type Product = {
+  id: string,
+  name: string,
+  price: number,
+  imageUrl?: string,
+  description?: string,
+}
+
+export const useCart = create<Array<Product>>([])
+
+export const useUserProfile = create({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
+```
+The merge function was introduced to improve this situation. It bundles a maximum of eight useStore hooks into a single object, creating a useMergedStore hook similar to useStore. Using this new hook, you can fetch the state of multiple related stores with a single call and receive a unified setValue function to update those states. This is a "bottom-up" approach, allowing you to combine individually well-defined small stores as needed to construct larger state logic. Consequently, component code becomes more concise, and the consistency of state access and management is enhanced.
+
+```tsx copy showLineNumbers
+export const useUserProfileAndCart = merge({ 
+  cart: useCart,
+  userProfile: useUserProfile
+})
+```
+
+useMergedStore can use selector functions or the readOnly and writeOnly methods provided by useStore in the same way. However, Provider is not provided. This is because the merge function itself focuses on combining multiple store instances (or store access hooks) that can already be created and managed independently.
+
+## getStoreFrom
+
+A merged store created by the merge function (e.g., useMergedStore), when rendered under a useSomeStore.Provider component, will by default fetch values for each constituent store from the nearest Provider context. For example, if useMergedStore includes useUserProfile and is inside a useUserProfile.Provider, the userProfile part of useMergedStore will get its value from the store instance provided by that Provider.
+
+However, the merge function can accept a getStoreFrom option as its second optional argument. This option, in object form, allows you to explicitly specify where each useStore key used in the merge should fetch its value from. You can set a value of 'context' or 'root' for each key.
+
+* `'context'` (or default behavior if the option is omitted): The corresponding useStore part follows the nearest Provider context. If there is no enclosing Provider, it uses the top-level (global) store created by create.
+* `'root'`: The corresponding useStore part always fetches its value directly from the top-level (global) store created by create, regardless of the presence of a Provider context.
+
+This `getStoreFrom` option gives developers fine-grained control over which scope of state each part of the merged store references, greatly enhancing flexibility in complex application architectures.
+
+```tsx copy showLineNumbers
+import { create, createStore } from 'caro-kann'; // Assuming functions are imported from caro-kann library
+import { merge } from 'caro-kann/utils'
+
+// --- Individual Store Definitions ---
+// 1. Top-level (Root) store for user preferences
+export const useUserPreferences = create({
+  theme: 'light',
+  language: 'en',
+  source: 'Root Preferences Store',
+});
+
+// 2. Top-level (Root) store for notification settings
+export const useNotificationSettings = create({
+  emailEnabled: true,
+  pushEnabled: true,
+  source: 'Root Notifications Store',
+});
+
+// --- Specific Store Instances for Provider ---
+// Store instance for User Preferences Provider
+export const preferencesStoreForProvider = createStore({
+  theme: 'dark',
+  language: 'ko',
+  source: 'Provider Preferences Instance',
+});
+
+// Store instance for Notification Settings Provider (for conceptual explanation, not used in this example)
+export const notificationsStoreForProvider = createStore({
+  emailEnabled: false,
+  pushEnabled: false,
+  source: 'Provider Notifications Instance',
+});
+
+
+// --- Merged Store Definitions ---
+// Default behavior: all parts follow context (explicitly 'context' or omitted)
+export const useMergedSettingsDefault = merge({
+  prefs: useUserPreferences,      // Uses Provider's store if inside a Provider
+  notifs: useNotificationSettings, // Uses Provider's store if inside a Provider (if that Provider exists)
+}
+// Omitting the getStoreFrom option defaults to 'context' behavior
+// , { prefs: 'context', notifs: 'context' } // Specifying this is the same
+);
+
+// prefs follows Provider, notifs always references root
+export const useMergedSettingsMixed = merge(
+  {
+    prefs: useUserPreferences,
+    notifs: useNotificationSettings,
+  },
+  { // Second argument: getStoreFrom options
+    prefs: 'context', // useUserPreferences part follows context
+    notifs: 'root',   // useNotificationSettings part always references the top-level store
+  }
+);
+
+// All parts always reference root
+export const useMergedSettingsAllRoot = merge(
+  {
+    prefs: useUserPreferences,
+    notifs: useNotificationSettings,
+  },
+  {
+    prefs: 'root',
+    notifs: 'root',
+  }
+);
+```
+
+## Limitations
+
+While the merge function offers a powerful way to conveniently combine multiple useStore hooks, it has a few limitations.
+
+1. **Cannot Merge Stores Using reducer Middleware**: useStore hooks created using the reducer middleware cannot be merged with other stores via the merge function. Attempting to do so will result in a type error in a TypeScript environment, preventing it beforehand. This is because the reducer middleware fundamentally changes how the setValue function behaves, and its state update logic differs from a typical useStore. The merge function operates on the assumption that each useStore adheres to the standard [value, setValue] interface, thus leading to compatibility issues with stores using reducer.
+2. **Maximum Merge Count Limit**: As briefly mentioned earlier, the merge function can only merge up to 8 useStore hooks at a time. Attempting to merge more than 8 stores will result in the following error:
+
+> Error: merge function can only merge up to 8 stores at a time. Please reduce the number of stores you are trying to merge.
+
+There are two main reasons for this limitation:
+
+* **React Hook Rules**: Internally, the merge function uses useContext to get the context value of each useStore. React Hooks have a rule that they cannot be called inside loops or conditional statements, which imposes constraints on dynamically handling an unlimited number of contexts.
+* **Performance Considerations**: While it might be theoretically possible to implement merging for more stores, as the number of merged stores increases, the internal logic becomes more complex, and there's a potential for performance degradation during state changes, subscriptions, and updates. The limit of 8 can be seen as a balance between usability and performance.
+
+Furthermore, because the merge function returns `useMergedStore` and not `useStore`, fundamentally, it's impossible to recombine multiple merge results. Understanding these limitations when using the merge function will help in effectively designing your application's state management structure and preventing unexpected issues.

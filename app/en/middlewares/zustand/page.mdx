@@ -4,7 +4,7 @@
 
 Caro-Kann's useStore function, by default, returns a tuple [value, setValue] similar to the useState API. This provides a straightforward and intuitive way to read and update state. However, when using the zustand middleware, the useStore function operates in a manner similar to the API provided by zustand. This allows developers to flexibly choose the state management approach as needed, even within the same project.
 
-```tsx
+```tsx copy showLineNumbers
 const useStore = create<TStore>(
   zustand((set, get, api) => initialState)
 )
@@ -12,7 +12,7 @@ const useStore = create<TStore>(
 
 When the zustand middleware is used, Caro-Kann fails to infer the store's type automatically. Therefore, it is necessary to explicitly define the store's type when calling the create function.
 
-```tsx
+```tsx copy showLineNumbers
 type TStore = { count: number, increment: () => void, decrement: () => void }
  
 const useStore = create<TStore>(
