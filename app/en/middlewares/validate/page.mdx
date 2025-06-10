@@ -1,34 +1,33 @@
 # validate
 
-The validate middleware is a powerful tool that brings robust type safety to state management. Before any state change occurs, it performs validation based on a predefined schema, effectively preventing invalid data from being introduced into the application state.
-
-One of its key strengths is seamless integration with popular validation libraries such as Zod, Yup, and Superstruct, allowing developers to continue using familiar tools.
+The validate middleware is a useful tool for enhancing type safety in state management. This middleware validates data against a predefined schema before the state is changed. This helps maintain state consistency and stability by preventing invalid data from being reflected in the application state. If an invalid state change attempt occurs, the change is blocked, and detailed error information is immediately printed to the console, facilitating debugging.
 
 ```tsx copy showLineNumbers
 const useStore = create(
-  validate(initialState, ValidateSchema)
+  validate(initialState, Resolver<T>)
 )
 ```
 
-The true value of the validate middleware lies in its proactive approach that significantly reduces runtime errors. If an invalid state update is attempted, the middleware blocks the update and logs a detailed error message to the console, making debugging much easier.
-
-This is particularly useful when handling complex forms or storing API response data in the state. It effectively extends TypeScript’s static type checking into runtime, giving developers confidence in the integrity of their application state and allowing them to focus more on business logic.
+The validate middleware in caro-kann internally utilizes [common-resolver](https://www.npmjs.com/package/common-resolver), allowing for easy integration with various widely used validation libraries such as zod, yup, and superstruct. This offers the advantage that developers can effectively manage the integrity of state data using familiar tools or those already implemented in their projects.
 
 ```tsx copy showLineNumbers
 import { z } from "zod";
 import * as yup from "yup";
 import { object, number } from "superstruct";
+import { zodResolver } from "common-resolver/zod"
+import { yupResolver } from "common-resolver/yupResolver"
+import { superstructResolver } from "common-resolver/superstructResolver"
 
 const zSchema = z.object({ count: z.number().min(0) });
 const ySchema = yup.object({ count: yup.number().min(0).required() });
 const sSchema = object({ count: number() });
 
 const useStore = create(
-  validate({ count: 0 }, zSchema)
-  // validate({ count: 0 }, ySchema)
-  // validate({ count: 0 }, sSchema)
+  validate({ count: 0 }, zodResolver(zSchema))
+  // validate({ count: 0 }, yupResolver(ySchema))
+  // validate({ count: 0 }, superstructResolver(sSchema))
 );
- 
+
 export default function Page() {
   const [count, setCount] = useStore(store => store.count)
  
