@@ -1,5 +1,7 @@
 # logger
 
+> The logger middleware is automatically disabled in a NODE_ENV=production environment, preventing unnecessary code from being included in the production build or impacting performance.
+
 The logger middleware allows you to track state changes in real time and debug your application more effectively. It logs the previous and next state to the console every time the state updates, helping developers easily understand the flow of state changes.
 
 ```tsx copy showLineNumbers
