@@ -4,7 +4,6 @@ Caro-Kann is a global state management tool internally built with the useSyncExt
 
 ## What's new in caro-kann@4.0.0
 
-*   Thanks to continuous refactoring, the bundle size has been reduced by nearly 30% in the new version, despite the addition of several new features.
 *   The Zustand middleware has now been completely removed. Also, the usage of the validate middleware has changed.
 *   `useStore.derived` has been renamed to `useStore.readOnly`. Additionally, a `writeOnly` method has been added to `useStore`. This allows for clearer and more efficient state management, even in components that need to change state but do not need to subscribe to the state directly. These changes make the code's intent clearer and contribute to reducing unnecessary re-renders.
 *   The provider, which was removed in the previous version, has returned. This allows for the configuration of independent state trees within specific contexts, further enhancing the application's flexibility and reusability.

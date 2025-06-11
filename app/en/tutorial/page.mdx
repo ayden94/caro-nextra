@@ -1,12 +1,12 @@
 # Tutorial: Building a Shopping Cart
 
-In this tutorial, we will build a simple shopping cart feature. Throughout this process, you'll learn how to use various features of the Caro-Kann library for state management and middleware composition. This tutorial is aimed at users with a basic understanding of React and focuses on learning the overall usage of the Caro-Kann library.
+This tutorial guides you through implementing a simple yet practical shopping cart feature in a React environment using the Caro-Kann library. You will learn how to efficiently manage state and easily integrate various additional functionalities through Caro-Kann's intuitive state management approach and powerful middleware system.
 
-## Creating the Store
+This tutorial is aimed at developers with a basic understanding of React, and its goal is to help you learn the core concepts and practical usage of Caro-Kann so you can apply it to real projects.
 
-First, we define the Product type, which includes basic product information such as id, name, and price. Additionally, imageUrl and description are set as optional fields.
+## Creating a Store
 
-Then, we import the create function from caro-kann and use it to create a global state store. The useCart hook returned by this create function is used to manage the cart state. Inside components, the useCart hook allows you to access and update global state, as well as compute derived state.
+Before starting state management for an application, it's good practice to define the structure of the data we'll be handling. Here, we'll create a TypeScript type to clarify the attributes of a 'Product' that will be in the shopping cart. Each product will have a unique `id`, `name`, and `price` температураs mandatory, and can optionally include `imageUrl` and `description`. Defining types 이렇게 beforehand can reduce data-related errors during development and improve code readability and maintainability.
 
 ```tsx copy showLineNumbers
 export type Product = {
@@ -16,58 +16,89 @@ export type Product = {
   imageUrl?: string,
   description?: string,
 }
+```
 
+Next, we import the `create` function from the Caro-Kann library to create a global state store. The `create` function takes an initial state value as an argument and returns a custom hook that can manage that state. In this example, we set an empty array `[]` as the initial state, indicating that the shopping cart is initially empty. The `useCart` hook, returned by the `create<Array<Product>>([])` call, will now be the core interface used by all components in our application to access and modify the shopping cart state.
+```tsx copy showLineNumbers
 export const useCart = create<Array<Product>>([])
 ```
 
-## Updating Global State with useCart
+## Changing Global State with useCart
 
-ProductBind is a component that receives a productList and renders a ProductCard for each product. Each product is passed as a prop to the ProductCard component. The ProductCard displays individual product details including image, name, description, and price. It also features an "Add to Cart" button that adds the product to the cart.
+Now let's look at how to change the shopping cart state in actual components using the `useCart` hook we created.
 
-Inside ProductCard, we use the useCart hook. This hook returns a tuple just like useState, with a value and setValue. This enables us to retrieve the cart state or update it as needed.
+First, the `ProductBinder` component receives a list of products (`productList`) from the server as props and is responsible for rendering a `ProductCard` component for each product. It acts as a list renderer, serving as a container to display multiple product information on the screen.
 
 ```tsx copy showLineNumbers
-function ProductBind({ productList }: { productList: Array<Product> }) {
+function ProductBinder({ productList }: { productList: Array<Product> }) {
+  const [cart, setCart] = useCart()
+
   return (
     <>
       {productList.map(product => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id}>
+          {product.imageUrl && <ProductCard.Image image={product.imageUrl}/>}
+          <ProductCard.Title name={product.name}/>
+          <ProductCard.Description description={product.description}/>
+          <ProductCard.Price price={product.price}/>
+          <button onClick={() => setCart(prev => [...prev, product])}>Add to Cart</button>
+        </ProductCard>
+      ))}
+    </>
+  )
+}
+```
+
+The `ProductCard` component displays detailed information for an individual product (image, name, description, price) and is responsible for the core functionality of adding the product to the cart via an "Add to Cart" button.
+
+Calling the `useCart()` hook inside this component returns a tuple containing the current cart state (`cart`) and a function to change the state (`setCart`), similar to React's `useState` hook.
+
+```tsx copy showLineNumbers
+const [cart, setCart] = useCart()
+```
+
+In the `onClick` handler of the "Add to Cart" button, the `setCart` function is used. It employs a functional update approach (`setCart(prev => [...prev, product])`), taking the previous state (`prev`) and returning a new array with the new product (`product`) added to the end. This is a good pattern for maintaining state immutability and helps React detect changes and update the UI efficiently.
+
+However, looking at the current implementation of the `ProductCard` component, it doesn't display the contents of the cart. That is, it doesn't need to read the `cart` state value directly; it only performs the function of adding items to the cart via the `setCart` function. In such cases, optimization can be considered to prevent the component from unnecessarily re-rendering whenever the cart state changes.
+
+Caro-Kann provides the `writeOnly` method built into the `useCart` hook for such situations. Using `useCart.writeOnly()` retrieves only the state-modifying function (corresponding to `setCart`) without fetching the state value itself.
+
+```tsx copy showLineNumbers
+const setCart = useCart.writeOnly()
+```
+
+This allows the `ProductBinder` component to not subscribe to changes in the current state of the cart, enabling it to solely perform the role of adding products while avoiding unnecessary re-renders. This is a useful optimization technique that can contribute to performance improvements, especially when state changes frequently or many components share the same state.
+
+```tsx copy showLineNumbers
+function ProductBinder({ product }: { product: Product }) {
+  const setCart = useCart.writeOnly()
+
+  return (
+    <>
+      {productList.map(product => (
+        <ProductCard key={product.id}>
+          {product.imageUrl && <ProductCard.Image image={product.imageUrl}>}
+          <ProductCard.Title name={product.name}>
+          <ProductCard.Description description={product.description}>
+          <ProductCard.Price price={product.price}>
+          <button onClick={() => setCart(prev => [...prev, product])}>Add to Cart</button>
+        </ProductCard>
       ))}
     </>
   )
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const [cart, setCart] = useCart()
+## Managing Derived State with readOnly method
 
-  return (
-    <div>
-      {product.imageUrl && <Image width={200} height={80} src={product.imageUrl} alt={product.name} />}
-      <h2>{product.name}</h2>
-      <p>{product.description}</p>
-      <p>Price: ${product.price}</p>
-      <button onClick={() => setCart(prev => [...prev, product])} disabled={cart.some(item => item.id === product.id)}>Add to Cart</button>
-    </div>
-  )
-}
-```
+The application's Header component plays an important role in visually showing the user the total number of products currently in the shopping cart. To implement this feature, we utilize the `readOnly` method of the `useCart` hook.
 
-## Managing Derived State with useCart.derived
+The `readOnly` method is a powerful feature that allows access to the current value of the state store to extract or calculate desired data. This method takes a callback function as an argument, and this callback function receives the current state (`store`) as a parameter and returns a derived value.
 
-The Header component visually displays the number of products in the cart. To achieve this, we use the derived property built into the useCart hook to calculate the number of products currently in the cart.
-
-The derived property is a utility for computing values derived from the current state. Here, we use it to compute the cart array’s length. This allows us to extract only the necessary derived value without referencing the entire state, improving performance by reducing unnecessary re-renders.
+In the example below, `useCart.readOnly(store => store.length)` is used to calculate the total number of products in the cart (`cartLength`) through the `length` property of the cart array (`store`).
 
 ```tsx copy showLineNumbers
 function Header() {
-  const cartLength = useCart.derived(store => store.length)
-
-  const showDialog = () => {
-    addDialog({
-      element: <Cart />,
-      position: 'center' // or 'bottom'
-    });
-  };
+  const cartLength = useCart.readOnly(store => store.length)
 
   return (
     <header>
@@ -75,160 +106,165 @@ function Header() {
 
       <Logo />
 
-      <button onClick={showDialog}>
+      <Link href="/cart">
         <div className="cart">
           <Image src="/cart.svg" alt="cart" width={24} height={24} />
           {cartLength !== 0 && <span className="cart-count">{cartLength}</span>}
         </div>
-      </button>
+      </Link>
     </header>
   )
 }
 ```
 
-## Creating a Cart Modal
+The main advantages of using `readOnly` are as follows:
 
-The cart modal consists of two components: Cart and CartCard. Using the useCart hook, we retrieve the globally managed cart state and render each product on the screen. The Cart component iterates over the list of products in the cart and renders a CartCard for each one. The key is set to the product’s id to help React uniquely identify each element.
+1.  **Selective Subscription**: The component re-renders only in response to changes in the specific value returned by the callback function, not the entire state object. For example, the `Header` component will only re-render when products are added or removed from the cart, changing `store.length`. If only an attribute of a specific item in the cart changes but the total count remains the same, this component will not re-render, reducing unnecessary operations.
+2.  **Derived State Calculation**: It's not just about fetching a part of the state; you can create calculated values (derived state) based on the state. For example, logic to calculate the total cart amount or to filter and show the count of items meeting specific criteria can be handled within the `readOnly` callback.
+3.  **Performance Optimization**: By subscribing precisely to only the necessary data, it prevents unnecessary re-renders that occur when other parts of the state change. This significantly contributes to performance optimization, especially in applications with complex state structures or frequent state updates.
+
+Consequently, `useCart.readOnly` is very useful for creating components that depend only on specific parts of the state or derived values, and it helps improve the reactivity and performance of the application.
+
+## Creating the Cart Page
+
+The cart page displays a list of products selected by the user and provides functionality to remove individual products or clear the entire cart. It also calculates and displays the total amount for all products in the cart. This page is primarily composed of a `Cart` component, and each cart item can be rendered via `ProductCard` (or a separate `CartItemCard`).
+
+In the `Cart` component, a selector function is passed to the `useCart` hook to efficiently retrieve only the necessary data. This selector function takes the current cart state (`store`) as an argument and returns an object containing the list of cart items (`items`) and the total price of all items (`priceTotal`). This way, the `Cart` component only re-renders when the cart items or the total amount changes.
+
+*   `items`: An array of product objects currently in the cart.
+*   `priceTotal`: The sum of `product.price` for each item in the `items` array.
 
 ```tsx copy showLineNumbers
 function Cart() {
-  const [cart, setCart] = useCart();
+  const [cartData, setCart] = useCart(store => ({
+    items: store, // The entire cart item array
+    priceTotal: store.reduce((sum, product) => sum + product.price, 0) // Sum of each product's price
+  }));
 
   return (
     <>
-      {cart.map(product => (
-        <CartCard key={product.id} product={product} />
+      {cartData.items.map(product => (
+        <ProductCard key={product.id}>
+          {product.imageUrl && <ProductCard.Image image={product.imageUrl}/>}
+          <ProductCard.Title name={product.name}/>
+          <ProductCard.Description description={product.description}/>
+          <ProductCard.Price price={product.price}/>
+          <button onClick={() => setCart(prev => prev.filter(item => item.id !== product.id))}>Remove from Cart</button>
+        </ProductCard>
       ))}
+      <div>
+        {/* Using priceTotal directly */}
+        <strong>Total: ${cartData.priceTotal.toFixed(2)}</strong>
+      </div>
       <button onClick={() => setCart([] as Array<Product>)}>Clear Cart</button>
     </>
   )
 }
 ```
-CartCard displays product information and includes a button to remove that product from the cart. When clicked, it filters out the product from the cart array and updates the state.
 
+## Extending Cart Functionality with Middleware Composition: Backup and Action Verification
 
-```tsx copy showLineNumbers
-function CartCard({ product }: { product: Product }) {
-  const [cart, setCart] = useCart();
+One of Caro-Kann's powerful features is the ability to easily compose middleware to extend store functionality. Here, we'll apply `persist` and `logger` middleware to keep the cart state in the browser and easily track state changes.
 
-  return (
-    <div>
-      {product.imageUrl && <Image width={200} height={80} src={product.imageUrl} alt={product.name} />}
-      <h2>{product.name}</h2>
-      <p>{product.description}</p>
-      <p>Price: ${product.price}</p>
-      <button onClick={() => setCart(prev => prev.filter(item => item.id !== product.id))}>Remove from Cart</button>
-    </div>
-  )
-}
-```
+### 1. Persisting cart state with persist middleware
 
-## Refactoring with Reducer
+By default, an web application's state is reset when the page is refreshed or the browser is closed. To prevent users from losing the products they've added to their cart, the state needs to be stored somewhere. The `persist` middleware makes managing this state persistence very simple.
 
-Previously, the useCart hook directly manipulated the array state using setCart. By introducing a reducer, we can manage state in an action-driven manner. This improves predictability and maintainability, and makes the state transition process more explicit. This approach is particularly useful when cart logic becomes complex or requires various event-based operations.
+The `persist` middleware automatically saves data to a specified storage (e.g., `localStorage`) whenever the state changes, and restores the state by loading this data when the application reloads.
+
+Here's how to apply the `persist` middleware to the `useCart` store:
 
 ```tsx copy showLineNumbers
-const cartReduceFn = (
-  state: Array<Product>,
-  action:
-    | { type: "CLEAR_CART" }
-    | { type: "ADD_ITEM"; payload: Product }
-    | { type: "REMOVE_ITEM"; payload: Product }
-) => {
-  switch (action.type) {
-    case "ADD_ITEM":
-      if (state.find(item => item.id === action.payload.id)) {
-        alert("This product is already in the cart");
-        return state;
-      }
-      return [...state, action.payload];
-    case "REMOVE_ITEM":
-      if (!state.find(item => item.id === action.payload.id)) {
-        alert("This product is not in the cart");
-        return state;
-      }
-      return [...state.filter(item => item.id !== action.payload.id)]
-    case "CLEAR_CART":
-      return [];
-    default:
-      return state;
-  }
-}
+import { create } from 'caro-kann';
+import { persist } from 'caro-kann/middleware';
 
-export const useCart = create(reducer(cartReduceFn, []))
-```
-
-Now, instead of using setCart, the useCart hook uses a dispatch function to modify the state. Each component dispatches a specific action with a clear type and payload, making the intent behind each state change explicit. This greatly enhances readability and scalability. For example, ProductCard dispatches an "ADD_ITEM" action, CartCard dispatches "REMOVE_ITEM", and Cart dispatches "CLEAR_CART".
-
-
-```tsx copy showLineNumbers
-function ProductCard({ product }: { product: Product }) {
-  const [cart, dispatch] = useCart()
-
-  return (
-    <div>
-      // existing UI
-      <button onClick={() => dispatch({ type: "ADD_ITEM", payload: product })}>Add to Cart</button>
-    </div>
-  )
-}
-
-function Cart() {
-  const [cart, dispatch] = useCart();
-
-  return (
-    <>
-      // existing UI
-      <button onClick={() => dispatch({ type: "CLEAR_CART" })}>Clear Cart</button>
-    </>
-  )
-}
-
-function CartCard({ product }: { product: Product }) {
-  const [cart, dispatch] = useCart();
-
-  return (
-    <div>
-      // existing UI
-      <button onClick={() => dispatch({ type: "REMOVE_ITEM", payload: product })}>Remove from Cart</button>
-    </div>
-  )
-}
-```
-
-## Persisting Cart State with Component Composition
-
-Since cart state is reset when the page is refreshed or the browser is closed, preserving the cart improves the user experience. To achieve this, you can combine the persist middleware with the reducer middleware provided by Caro-Kann.
-
-The persist middleware automatically saves the state to a specified storage (like localStorage) whenever the state changes, and restores the state when the app initializes. With this, users can return to the site and see their cart items still intact, and developers can implement persistent state without custom storage logic.
-
-```tsx copy showLineNumbers
 export const useCart = create(
-  reducer(
-    cartReduceFn,
-    persist(
-      [] as Array<Product>,
-      { local: "cart" }
-    )
+  persist<Array<Product>>([], { local: "cart-storage" })
+)
+```
+
+### 2. Tracking state changes with logger middleware
+
+During development, understanding how the state changes and what actions caused those changes is crucial for debugging. The `logger` middleware helps track this process easily by printing state change-related information to the console.
+
+The `logger` middleware can be composed with the `persist` middleware. Middleware is applied by wrapping functions, so you can think of it as executing from the inside out. That is, when a state change occurs, `logger` acts first, then `persist` acts.
+
+```tsx copy showLineNumbers
+import { create } from 'caro-kann';
+import { persist, logger } from 'caro-kann/middleware';
+
+export const useCart = create(
+  persist(
+    logger<Array<Product>>(
+      [],
+      {
+        diff: true,
+        timestamp: true
+      }
+    ),
+    { local: "cart-storage" }
   )
 )
 ```
 
-During development, if you want to verify how Caro-Kann is working, you can use the logger or devtools middleware. devtools offers features like time-travel debugging and state inspection, but if you just want a simple way to see if your cart is working correctly, logger is sufficient.
+Now, whenever a product is added to or removed from the cart, relevant logs will be printed to the browser console, allowing clear verification of the state change process. You can also adjust logger options to selectively view only the necessary information.
+
+## Merging stores with `merge`
+
+As an application grows, it can be more efficient to manage related states in separate stores. For example, cart state can be managed in a `useCart` store, and user profile information in a `useProfile` store.
+
+Caro-Kann provides a `merge` utility to conveniently use and manage these separated stores as a single, unified hook. `merge` takes multiple store hooks as input and returns a new hook that can access the state and setter functions of each store.
+
+First, define the individual stores. Here, we'll use cart (`useCart`) and user profile (`useProfile`) stores as examples. A `User` type also needs to be defined.
+
 ```tsx copy showLineNumbers
-export const useCart = create(
-  reducer(
-    cartReduceFn,
-    persist(
-      logger(
-        [] as Array<Product>,
-        {
-          diff: true,
-          timestamp: true
-        }
-      ),
-      { local: "cart" }
-    )
-  )
-)
+import { create } from 'caro-kann';
+import { merge } from 'caro-kann/utils';
+
+export const useCart = create<Array<Product>>([])
+export const useProfile = create<User>({
+  email: "wpfekdml@me.com",
+  name: "Ayden Blair",
+  phoneNumber: "010-****-****",
+  age: 30,
+});
 ```
+
+Now, use the `merge` utility to combine the `useCart` and `useProfile` stores. Pass an object to the `merge` function, where each key will be the name used in the merged store, and the value will be the respective store hook.
+
+```tsx copy showLineNumbers
+export const useProfileAndCart = merge({
+  user: useProfile, // Access useProfile store with 'user' key
+  cart: useCart     // Access useCart store with 'cart' key
+});
+```
+
+Using the `useProfileAndCart` hook created this way, you can access the state and setter functions of each store as if dealing with one large store.
+
+For example, within a component, you can use it as follows:
+
+```tsx copy showLineNumbers
+function MyComponent() {
+  // useProfileAndCart 훅을 호출합니다.
+  const { userName, cartItems } = useProfileAndCart.readOnly(mergedStore => ({
+    userName: mergedStore.user.name,
+    cartItems: mergedStore.cart
+  }));
+
+  return (
+    <div>
+      <p>User Name: {userName}</p>
+      <p>Cart Items Count: {cartItems.length}</p>
+      {/* ... */}
+    </div>
+  );
+}
+```
+
+## Wrapping up: Efficient State Management with Caro-Kann
+
+So far, we've explored how to implement basic shopping cart functionality using the Caro-Kann library. Through this tutorial, you've learned how to create a store with the `create` function, read and update state via the `useCart` hook, optimize with `writeOnly` and `readOnly`, and manage derived state using selectors. We also looked at how to easily extend store functionality by composing `persist` and `logger` middleware, and how to manage multiple stores integratively with the `merge` utility.
+
+The topics covered here are just a part of the diverse features Caro-Kann offers. In actual application development, you'll encounter more complex state logic, asynchronous operations, advanced middleware usage, and various other scenarios. Caro-Kann provides powerful and flexible features to meet these advanced requirements, helping developers handle state management more efficiently and intuitively.
+
+For deeper learning and to explore the full potential of Caro-Kann, we highly recommend referring to the official documentation. The official documentation provides detailed guidance on various APIs not covered in this tutorial, advanced usage patterns, and best practices for real-world production environments. We hope you have a more enjoyable and productive state management experience with Caro-Kann.
