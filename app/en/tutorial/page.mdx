@@ -195,14 +195,8 @@ import { persist, logger } from 'caro-kann/middleware';
 
 export const useCart = create(
   persist(
-    logger<Array<Product>>(
-      [],
-      {
-        diff: true,
-        timestamp: true
-      }
-    ),
-    { local: "cart-storage" }
+    logger<Array<Product>>([], { diff: true, timestamp: true }),
+    { local: 'cart-storage' }
   )
 )
 ```
@@ -219,13 +213,20 @@ First, define the individual stores. Here, we'll use cart (`useCart`) and user p
 
 ```tsx copy showLineNumbers
 import { create } from 'caro-kann';
+import { persist, logger } from 'caro-kann/middleware';
 import { merge } from 'caro-kann/utils';
 
-export const useCart = create<Array<Product>>([])
+export const useCart = create(
+  persist(
+    logger<Array<Product>>([], { diff: true, timestamp: true }),
+    { local: 'cart-storage' }
+  )
+)
+
 export const useProfile = create<User>({
-  email: "wpfekdml@me.com",
-  name: "Ayden Blair",
-  phoneNumber: "010-****-****",
+  email: 'wpfekdml@me.com',
+  name: 'Ayden Blair',
+  phoneNumber: '010-****-****',
   age: 30,
 });
 ```
@@ -245,7 +246,6 @@ For example, within a component, you can use it as follows:
 
 ```tsx copy showLineNumbers
 function MyComponent() {
-  // useProfileAndCart 훅을 호출합니다.
   const { userName, cartItems } = useProfileAndCart.readOnly(mergedStore => ({
     userName: mergedStore.user.name,
     cartItems: mergedStore.cart
