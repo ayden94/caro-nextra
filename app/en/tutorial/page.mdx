@@ -49,8 +49,6 @@ function ProductBinder({ productList }: { productList: Array<Product> }) {
 }
 ```
 
-The `ProductCard` component displays detailed information for an individual product (image, name, description, price) and is responsible for the core functionality of adding the product to the cart via an "Add to Cart" button.
-
 Calling the `useCart()` hook inside this component returns a tuple containing the current cart state (`cart`) and a function to change the state (`setCart`), similar to React's `useState` hook.
 
 ```tsx copy showLineNumbers
@@ -59,7 +57,7 @@ const [cart, setCart] = useCart()
 
 In the `onClick` handler of the "Add to Cart" button, the `setCart` function is used. It employs a functional update approach (`setCart(prev => [...prev, product])`), taking the previous state (`prev`) and returning a new array with the new product (`product`) added to the end. This is a good pattern for maintaining state immutability and helps React detect changes and update the UI efficiently.
 
-However, looking at the current implementation of the `ProductCard` component, it doesn't display the contents of the cart. That is, it doesn't need to read the `cart` state value directly; it only performs the function of adding items to the cart via the `setCart` function. In such cases, optimization can be considered to prevent the component from unnecessarily re-rendering whenever the cart state changes.
+However, looking at the current implementation of the `ProductBinder` component, it doesn't display the contents of the cart. That is, it doesn't need to read the `cart` state value directly; it only performs the function of adding items to the cart via the `setCart` function. In such cases, optimization can be considered to prevent the component from unnecessarily re-rendering whenever the cart state changes.
 
 Caro-Kann provides the `writeOnly` method built into the `useCart` hook for such situations. Using `useCart.writeOnly()` retrieves only the state-modifying function (corresponding to `setCart`) without fetching the state value itself.
 
@@ -215,7 +213,6 @@ First, define the individual stores. Here, we'll use cart (`useCart`) and user p
 ```tsx copy showLineNumbers
 import { create } from 'caro-kann';
 import { persist, logger } from 'caro-kann/middleware';
-import { merge } from 'caro-kann/utils';
 
 export const useCart = create(
   persist(
@@ -235,6 +232,8 @@ export const useProfile = create<User>({
 Now, use the `merge` utility to combine the `useCart` and `useProfile` stores. Pass an object to the `merge` function, where each key will be the name used in the merged store, and the value will be the respective store hook.
 
 ```tsx copy showLineNumbers
+import { merge } from 'caro-kann/utils';
+
 export const useProfileAndCart = merge({
   user: useProfile, // Access useProfile store with 'user' key
   cart: useCart     // Access useCart store with 'cart' key
@@ -264,7 +263,7 @@ function MyComponent() {
 
 ## Wrapping up: Efficient State Management with Caro-Kann
 
-So far, we've explored how to implement basic shopping cart functionality using the Caro-Kann library. Through this tutorial, you've learned how to create a store with the `create` function, read and update state via the `useCart` hook, optimize with `writeOnly` and `readOnly`, and manage derived state using selectors. We also looked at how to easily extend store functionality by composing `persist` and `logger` middleware, and how to manage multiple stores integratively with the `merge` utility.
+So far, we've explored how to implement basic shopping cart functionality using the Caro-Kann library. Through this tutorial, you've learned how to create a store with the `create` function, read and update state via the `useCart` hook, optimize with `writeOnly` and `readOnly` methods, and manage derived state using selectors. We also looked at how to easily extend store functionality by composing `persist` and `logger` middleware, and how to manage multiple stores integratively with the `merge` utility.
 
 The topics covered here are just a part of the diverse features Caro-Kann offers. In actual application development, you'll encounter more complex state logic, asynchronous operations, advanced middleware usage, and various other scenarios. Caro-Kann provides powerful and flexible features to meet these advanced requirements, helping developers handle state management more efficiently and intuitively.
 
