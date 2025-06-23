@@ -62,6 +62,8 @@ const useSidebarToggle = merge({
 Using the merged store this way allows you to manage state consistently while maintaining each store's individual characteristics:
 
 ```tsx copy showLineNumbers
+import { adaptor } from 'caro-kann/utils';
+
 function NavigationComponent() {
   const [sidebarState, setSidebarState] = useSidebarToggle(store => ({
     desktop: store.desktop ? 'Open' : 'Closed',
@@ -69,7 +71,9 @@ function NavigationComponent() {
   }));
 
   const toggleSidebar = (where: "desktop" | "mobile") => {
-    setSidebarState[where](prev => !prev);
+    setSidebarState(adaptor(prev => {
+      prev[where] = !prev[where];
+    }))
   };
 
   return (
