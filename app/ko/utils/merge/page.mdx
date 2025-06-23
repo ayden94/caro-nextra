@@ -33,6 +33,69 @@ export const useUserProfileAndCart = merge({
 
 useMergedStore는 선택자 함수나 useStore가 제공하는 readOnly와 writeOnly 메서드도 동일하게 사용할 수 있습니다. 하지만 Provider는 제공되지 않습니다. 이는 merge 함수 자체가 이미 독립적으로 생성되고 관리될 수 있는 여러 스토어 인스턴스(또는 스토어 접근 훅)를 조합하는 데 초점을 맞추고 있기 때문입니다.
 
+## 서로 다른 미들웨어를 사용하는 스토어 병합하기
+
+merge 함수의 강력한 기능 중 하나는 서로 다른 미들웨어를 사용하는 스토어들을 자유롭게 조합할 수 있다는 점입니다. 각 스토어는 자신의 요구사항에 맞는 미들웨어를 독립적으로 사용하면서도, merge를 통해 하나의 통합된 인터페이스로 관리할 수 있습니다.
+
+다음 예시에서는 사이드바 토글 기능을 구현하면서, 데스크탑과 모바일 환경에서 서로 다른 데이터 지속성 전략을 적용합니다:
+
+```tsx
+import { create } from 'caro-kann';
+import { persist } from 'caro-kann/middleware';
+import { merge } from 'caro-kann/utils';
+
+// 데스크탑 사이드바 토글 상태 (persist 미들웨어 사용)
+// 사용자의 선호도를 기억하기 위해 브라우저 새로고침 후에도 상태가 유지됩니다
+const useDesktopSidebarToggle = create(
+  persist(false, { local: "desktopSidebarToggle" })
+);
+
+// 모바일 사이드바 토글 상태 (미들웨어 없음)
+// 모바일에서는 보통 세션 동안만 상태를 유지하는 것이 일반적입니다
+const useMobileSidebarToggle = create(false);
+
+// 두 스토어를 하나로 병합
+const useSidebarToggle = merge({
+  desktop: useDesktopSidebarToggle,  // persist 미들웨어 적용됨
+  mobile: useMobileSidebarToggle     // 미들웨어 없음
+});
+```
+
+이렇게 병합된 스토어를 사용하면, 각각의 특성을 유지하면서도 일관된 방식으로 상태를 관리할 수 있습니다:
+
+```tsx
+function NavigationComponent() {
+  const [sidebarState, setSidebarState] = useSidebarToggle(store => ({
+    desktop: store.desktop ? 'Open' : 'Closed',
+    mobile: store.mobile ? 'Open' : 'Closed'
+  }));
+
+  const toggleSidebar = (where: "desktop" | "mobile") => {
+    setSidebarState[where](prev => !prev);
+  };
+
+  return (
+    <nav>
+      <button onClick={() => toggleSidebar("desktop")}>
+        Desktop Sidebar: {sidebarState.desktop}
+      </button>
+      <button onClick={() => toggleSidebar("mobile")}>
+        Mobile Sidebar: {sidebarState.mobile}
+      </button>
+    </nav>
+  );
+}
+```
+
+이 접근 방식의 주요 이점은 다음과 같습니다:
+
+* **적절한 데이터 지속성**: 데스크탑 사이드바는 사용자 선호도로 간주되어 영구 저장되고, 모바일 사이드바는 임시 UI 상태로 취급됩니다.
+* **유연한 아키텍처**: 각 스토어가 독립적으로 최적화되면서도 통합된 인터페이스를 제공합니다.
+* **유지보수성**: 필요시 개별 스토어의 미들웨어를 변경하거나 추가해도 병합된 스토어를 사용하는 컴포넌트 코드에는 영향을 주지 않습니다.
+
+merge 함수는 이처럼 각기 다른 요구사항을 가진 상태들을 효율적으로 조합하여, 복잡한 애플리케이션에서도 일관되고 직관적인 상태 관리를 가능하게 합니다.
+
+
 ## getStoreFrom
 
 useSomeStore.Provider 컴포넌트 하위에서 렌더링되는, merge 함수로 생성된 병합 스토어(예: useMergedStore)는 기본적으로 각 구성 요소 스토어에 대해 가장 가까운 Provider 컨텍스트를 따릅니다. 예를 들어, useUserProfile을 포함하는 useMergedStore가 useUserProfile.Provider 내부에 있다면, useMergedStore의 userProfile 부분은 해당 Provider가 제공하는 스토어 인스턴스에서 값을 가져옵니다.

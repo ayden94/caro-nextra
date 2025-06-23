@@ -33,6 +33,65 @@ export const useUserProfileAndCart = merge({
 
 useMergedStore can use selector functions or the readOnly and writeOnly methods provided by useStore in the same way. However, Provider is not provided. This is because the merge function itself focuses on combining multiple store instances (or store access hooks) that can already be created and managed independently.
 
+## Merging Stores with Different Middleware
+One of the powerful features of the merge function is its ability to freely combine stores that use different middleware. Each store can independently use middleware suited to its requirements, while being managed through a unified interface via merge.
+
+The following example implements sidebar toggle functionality, applying different data persistence strategies for desktop and mobile environments:
+
+```tsx
+import { create } from 'caro-kann';
+import { persist } from 'caro-kann/middleware';
+import { merge } from 'caro-kann/utils';
+
+// Desktop sidebar toggle state (using persist middleware)
+// State persists after browser refresh to remember user preferences
+const useDesktopSidebarToggle = create(
+  persist(false, { local: "desktopSidebarToggle" })
+);
+
+// Mobile sidebar toggle state (no middleware)
+// For mobile, it's common to maintain state only during the session
+const useMobileSidebarToggle = create(false);
+
+// Merge the two stores into one
+const useSidebarToggle = merge({
+  desktop: useDesktopSidebarToggle,  // persist middleware applied
+  mobile: useMobileSidebarToggle     // no middleware
+});
+```
+Using the merged store this way allows you to manage state consistently while maintaining each store's individual characteristics:
+
+```tsx
+function NavigationComponent() {
+  const [sidebarState, setSidebarState] = useSidebarToggle(store => ({
+    desktop: store.desktop ? 'Open' : 'Closed',
+    mobile: store.mobile ? 'Open' : 'Closed'
+  }));
+
+  const toggleSidebar = (where: "desktop" | "mobile") => {
+    setSidebarState[where](prev => !prev);
+  };
+
+  return (
+    <nav>
+      <button onClick={() => toggleSidebar("desktop")}>
+        Desktop Sidebar: {sidebarState.desktop}
+      </button>
+      <button onClick={() => toggleSidebar("mobile")}>
+        Mobile Sidebar: {sidebarState.mobile}
+      </button>
+    </nav>
+  );
+}
+```
+The main advantages of this approach are:
+
+* **Appropriate Data Persistence**: The desktop sidebar is considered a user preference and is permanently stored, while the mobile sidebar is treated as temporary UI state.
+* **Flexible Architecture**: Each store is independently optimized while providing a unified interface.
+* **Maintainability**: Changes or additions to individual store middleware don't affect component code that uses the merged store.
+The merge function efficiently combines states with different requirements, enabling consistent and intuitive state management even in complex applications.
+
+
 ## getStoreFrom
 
 A merged store created by the merge function (e.g., useMergedStore), when rendered under a useSomeStore.Provider component, will by default fetch values for each constituent store from the nearest Provider context. For example, if useMergedStore includes useUserProfile and is inside a useUserProfile.Provider, the userProfile part of useMergedStore will get its value from the store instance provided by that Provider.
