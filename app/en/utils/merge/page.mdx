@@ -38,7 +38,7 @@ One of the powerful features of the merge function is its ability to freely comb
 
 The following example implements sidebar toggle functionality, applying different data persistence strategies for desktop and mobile environments:
 
-```tsx
+```tsx copy showLineNumbers
 import { create } from 'caro-kann';
 import { persist } from 'caro-kann/middleware';
 import { merge } from 'caro-kann/utils';
@@ -61,7 +61,7 @@ const useSidebarToggle = merge({
 ```
 Using the merged store this way allows you to manage state consistently while maintaining each store's individual characteristics:
 
-```tsx
+```tsx copy showLineNumbers
 function NavigationComponent() {
   const [sidebarState, setSidebarState] = useSidebarToggle(store => ({
     desktop: store.desktop ? 'Open' : 'Closed',
